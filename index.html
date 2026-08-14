@@ -281,6 +281,9 @@
   table.cost th.month-col, table.cost td.month-col { text-align: right; padding-left: 8px; padding-right: 8px; min-width: 64px; }
   table.cost td.cost-name { white-space: normal; min-width: 160px; }
   table.cost tfoot td { font-weight: 700; border-top: 2px solid var(--line); border-bottom: none; background: var(--surface-2); }
+  th.sticky-actions, td.sticky-actions { position: sticky; right: 0; background: var(--surface); box-shadow: -6px 0 8px -6px rgba(0,0,0,0.25); }
+  tr:hover td.sticky-actions { background: var(--surface-2); }
+  table.cost tfoot td.sticky-actions { background: var(--surface-2); }
   .cat-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
   .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .month-grid .field label { font-size: 11px; }
@@ -873,14 +876,14 @@
         '<td class="num">' + (r.quantity !== "" && r.quantity !== null && r.quantity !== undefined ? r.quantity : '-') + '</td>' +
         '<td>' + esc(r.site || '-') + '</td>' +
         '<td class="cell-memo" title="' + esc(r.memo || '') + '">' + esc(r.memo || '-') + '</td>' +
-        '<td><div class="row-actions">' +
+        '<td class="sticky-actions"><div class="row-actions">' +
         '<button class="icon-btn" data-edit="' + r.id + '" title="수정" aria-label="수정">' + iconEdit() + '</button>' +
         '<button class="icon-btn" data-del="' + r.id + '" title="삭제" aria-label="삭제">' + iconTrash() + '</button>' +
         '</div></td></tr>';
     }).join("");
     return '<table class="records"><thead><tr>' +
       '<th>날짜</th>' + (mini ? '' : '<th>카테고리/업무</th>') +
-      '<th>제목</th><th>담당자</th><th>상태</th><th>금액</th><th>수량</th><th>현장</th><th>메모</th><th></th>' +
+      '<th>제목</th><th>담당자</th><th>상태</th><th>금액</th><th>수량</th><th>현장</th><th>메모</th><th class="sticky-actions">관리</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table>';
   }
   function iconEdit() { return '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11.3 2.3a1 1 0 0 1 1.4 0l1 1a1 1 0 0 1 0 1.4l-7.6 7.6-3 .7.7-3 7.5-7.7Z" stroke="currentColor" stroke-width="1.3"/></svg>'; }
@@ -1019,7 +1022,7 @@
         monthCells +
         '<td class="num" style="font-weight:700;">' + fmtMoney(rowTotal) + '</td>' +
         '<td class="cell-memo" title="' + esc((c.due || "") + (c.note ? " · " + c.note : "")) + '">' + esc(c.due || "-") + '</td>' +
-        '<td><div class="row-actions">' +
+        '<td class="sticky-actions"><div class="row-actions">' +
         '<button class="icon-btn" data-cost-edit="' + c.id + '" title="수정" aria-label="수정">' + iconEdit() + '</button>' +
         '<button class="icon-btn" data-cost-del="' + c.id + '" title="삭제" aria-label="삭제">' + iconTrash() + '</button>' +
         '</div></td></tr>';
@@ -1027,8 +1030,8 @@
     var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
     var thead = '<thead><tr><th>항목</th><th>구분</th><th>담당자</th>' +
       MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
-      '<th>합계</th><th>납부일(비고)</th><th></th></tr></thead>';
-    var tfoot = '<tfoot><tr><td colspan="3">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td colspan="2"></td></tr></tfoot>';
+      '<th>합계</th><th>납부일(비고)</th><th class="sticky-actions">관리</th></tr></thead>';
+    var tfoot = '<tfoot><tr><td colspan="3">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
     var wrap = document.getElementById("cost-table");
     wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
     wrap.querySelectorAll("[data-cost-edit]").forEach(function (btn) {

@@ -273,6 +273,19 @@
   .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
   .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
 
+  /* cost view */
+  .cost-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .cost-toolbar label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .cost-toolbar select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-weight: 600; }
+  table.cost th, table.cost td { white-space: nowrap; }
+  table.cost th.month-col, table.cost td.month-col { text-align: right; padding-left: 8px; padding-right: 8px; min-width: 64px; }
+  table.cost td.cost-name { white-space: normal; min-width: 160px; }
+  table.cost tfoot td { font-weight: 700; border-top: 2px solid var(--line); border-bottom: none; background: var(--surface-2); }
+  .cat-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+  .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .month-grid .field label { font-size: 11px; }
+  .month-grid .field input { padding: 6px 8px; }
+
   /* modal */
   .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,21,29,0.45); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
   .modal-backdrop.active { display: flex; }
@@ -378,6 +391,27 @@
         </div>
       </section>
 
+      <section class="view" id="view-cost" data-view="cost">
+        <div class="view-head">
+          <div>
+            <h2>비용 관리</h2>
+            <div class="desc">연도별 고정비·지출 항목을 관리합니다. 매달 반복되는 항목은 월별 금액을 각각 입력하세요.</div>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-export-cost-csv">CSV 내보내기</button>
+            <button class="btn btn-primary btn-sm" id="btn-add-cost">+ 항목 추가</button>
+          </div>
+        </div>
+        <div class="cost-toolbar">
+          <label for="cost-year-select">연도</label>
+          <select id="cost-year-select"></select>
+        </div>
+        <div class="kpi-row" id="cost-kpi-row"></div>
+        <div class="table-wrap" id="cost-table-wrap">
+          <table class="records cost" id="cost-table"></table>
+        </div>
+      </section>
+
       <!-- category views injected here -->
       <div id="category-views"></div>
     </main>
@@ -452,6 +486,52 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="cost-modal-backdrop">
+  <div class="modal">
+    <h3 id="cost-modal-title">비용 항목 추가</h3>
+    <div class="modal-sub" id="cost-modal-sub"></div>
+    <form id="cost-form">
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-cost-name">항목명</label>
+          <input id="f-cost-name" type="text" placeholder="예: 화재보험(체육시설포함)" required />
+        </div>
+        <div class="field">
+          <label for="f-cost-category">구분</label>
+          <select id="f-cost-category"></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-cost-assignee">담당자</label>
+          <input id="f-cost-assignee" type="text" value="총무지원팀" required />
+        </div>
+        <div class="field">
+          <label for="f-cost-due">납부일(기간)</label>
+          <input id="f-cost-due" type="text" placeholder="예: 매년 3월 07일 이전" />
+        </div>
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="f-cost-recurring" /> 매달 반복되는 항목입니다 (예: 리스료, 구독료)</label>
+      </div>
+      <div class="field">
+        <label>월별 금액 (원)</label>
+        <div class="month-grid" id="cost-month-grid"></div>
+      </div>
+      <div class="field">
+        <label for="f-cost-note">비고</label>
+        <textarea id="f-cost-note" rows="2" placeholder="예: 전년도 금액기준"></textarea>
+      </div>
+      <input type="hidden" id="f-cost-id" />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cost-modal-cancel">취소</button>
+        <button type="button" class="btn btn-danger" id="cost-modal-delete" style="display:none;">삭제</button>
+        <button type="submit" class="btn btn-primary">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -462,6 +542,8 @@
   var TEAM_PASSWORD = "topec123#";
   var SESSION_KEY = "chongmu.session";
   var RECORDS_KEY = "chongmu.records.v1";
+  var COST_KEY = "chongmu.costitems.v1";
+  var COST_SEEDED_KEY = "chongmu.costitems.seeded.v1";
 
   var memoryStore = {};
   var store = (function () {
@@ -528,6 +610,43 @@
   ];
 
   var STATUS_LIST = ["대기", "진행중", "완료", "보류"];
+  var COST_CATEGORIES = ["세금", "보험계약", "자격·면허", "필수점검", "고정지출", "기부", "기타"];
+  var MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+  function emptyMonths() {
+    var m = {};
+    for (var i = 1; i <= 12; i++) m[i] = 0;
+    return m;
+  }
+  function oneTimeCost(month, amount) {
+    var m = emptyMonths();
+    m[month] = amount;
+    return m;
+  }
+  function seedCostItems2026() {
+    var rows = [
+      ["등록면허세(엔지니어링 사업자 外 6건)", "자격·면허", "매년 1월 말", "전년도 금액기준", 1, 297000],
+      ["소방작동점검", "필수점검", "매년 1월 중", "전년도 금액기준", 1, 750000],
+      ["소방안전관리자 연회비", "자격·면허", "매년 1월 중", "전년도 금액기준", 1, 48000],
+      ["기계식주차장 & 승강기사고 배상", "보험계약", "매년 2월 12일 이전", "전년도 금액기준", 2, 164400],
+      ["화재보험(체육시설포함)", "보험계약", "매년 3월 07일 이전", "전년도 금액기준", 3, 2456500],
+      ["반트(휘트니스)연회비", "고정지출", "매년 5월 중", "전년도 금액기준(락카비 포함)", 5, 12663000],
+      ["재산세(토펙삼성빌딩)_건축", "세금", "매년 7월 중", "전년도 금액기준", 7, 11265440],
+      ["재산세(비체,오크,소노)_건축", "세금", "매년 7월 중", "전년도 금액기준", 7, 202750],
+      ["소방종합점검", "필수점검", "매년 7월 중", "전년도 금액기준", 7, 900000],
+      ["교통유발 부담금", "세금", "부과기간: 전년 8.1~당해 7.31 / 납부: 당해 10.16~10.31", "", 8, 0],
+      ["재산세(토펙삼성빌딩)_토지", "세금", "매년 9월 중", "전년도 금액기준", 9, 89340870],
+      ["재산세(비체,오크,소노)_토지", "세금", "매년 9월 중", "전년도 금액기준", 9, 18900],
+      ["주차장 영업배상보험", "보험계약", "매년 12월 19일 이전", "전년도 금액기준", 12, 1000000],
+      ["희망온돌 따듯한 겨울나기", "기부", "매년 12월 말", "전년도 금액기준", 12, 1000000]
+    ];
+    return rows.map(function (r) {
+      return {
+        id: uid(), year: 2026, name: r[0], category: r[1], recurring: false,
+        assignee: "총무지원팀", due: r[2], note: r[3], months: oneTimeCost(r[4], r[5])
+      };
+    });
+  }
 
   var itemIndex = {};
   var categoryIndex = {};
@@ -538,10 +657,13 @@
 
   var state = {
     records: [],
+    costItems: [],
+    costYear: new Date().getFullYear(),
     activeView: "overview",
     filters: { q: "", category: "", assignee: "", status: "", from: "", to: "" },
     editingId: null,
-    lockedCategory: null
+    lockedCategory: null,
+    editingCostId: null
   };
 
   function uid() { return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -554,6 +676,16 @@
     try { return JSON.parse(store.getItem(RECORDS_KEY)) || []; } catch (e) { return []; }
   }
   function saveRecords() { store.setItem(RECORDS_KEY, JSON.stringify(state.records)); }
+
+  function loadCostItems() {
+    try { return JSON.parse(store.getItem(COST_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveCostItems() { store.setItem(COST_KEY, JSON.stringify(state.costItems)); }
+  function costMonthTotal(item) {
+    var sum = 0;
+    for (var i = 1; i <= 12; i++) sum += Number(item.months[i] || 0);
+    return sum;
+  }
 
   function toast(msg) {
     var t = document.getElementById("toast");
@@ -602,6 +734,7 @@
     var html = '<div class="nav-group"><div class="nav-label">현황</div>';
     html += navItem("overview", "개요", "");
     html += navItem("records", "전체 기록", state.records.length);
+    html += navItem("cost", "비용 관리", state.costItems.length);
     html += "</div>";
     html += '<div class="nav-group"><div class="nav-label">업무 카테고리</div>';
     CATEGORIES.forEach(function (cat) {
@@ -630,6 +763,9 @@
     } else if (key === "records") {
       document.getElementById("view-records").classList.add("active");
       renderRecordsView();
+    } else if (key === "cost") {
+      document.getElementById("view-cost").classList.add("active");
+      renderCostView();
     } else if (key.indexOf("cat:") === 0) {
       var catId = key.slice(4);
       var el = document.getElementById("view-cat-" + catId);
@@ -826,6 +962,207 @@
     bindRowActions(wrap);
   }
 
+  /* ---------------- Cost management ---------------- */
+  function costItemsForYear(year) {
+    return state.costItems.filter(function (c) { return c.year === year; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, "ko"); });
+  }
+
+  function buildCostYearSelect() {
+    var years = state.costItems.map(function (c) { return c.year; });
+    var thisYear = new Date().getFullYear();
+    years.push(thisYear, thisYear + 1);
+    years = Array.from(new Set(years)).sort(function (a, b) { return b - a; });
+    var sel = document.getElementById("cost-year-select");
+    sel.innerHTML = years.map(function (y) { return '<option value="' + y + '">' + y + '년</option>'; }).join("");
+    sel.value = state.costYear;
+    sel.onchange = function () {
+      state.costYear = Number(sel.value);
+      renderCostKpis();
+      renderCostTable();
+    };
+  }
+
+  function renderCostKpis() {
+    var items = costItemsForYear(state.costYear);
+    var total = items.reduce(function (sum, c) { return sum + costMonthTotal(c); }, 0);
+    var recurring = items.filter(function (c) { return c.recurring; }).length;
+    document.getElementById("cost-kpi-row").innerHTML =
+      kpiCard(state.costYear + "년 총 지출", fmtMoney(total), "원") +
+      kpiCard("관리 항목 수", items.length, "건") +
+      kpiCard("매월 반복 항목", recurring, "건", "info");
+  }
+
+  function renderCostTable() {
+    var items = costItemsForYear(state.costYear);
+    var outer = document.getElementById("cost-table-wrap");
+    if (!items.length) {
+      outer.innerHTML = '<div class="empty-state">' + state.costYear + '년에 등록된 비용 항목이 없습니다. "+ 항목 추가"로 등록해보세요.</div>';
+      return;
+    }
+    outer.innerHTML = '<table class="records cost" id="cost-table"></table>';
+    var monthTotals = [0,0,0,0,0,0,0,0,0,0,0,0];
+    var grandTotal = 0;
+    var rows = items.map(function (c) {
+      var rowTotal = costMonthTotal(c);
+      grandTotal += rowTotal;
+      var monthCells = "";
+      for (var i = 1; i <= 12; i++) {
+        var v = Number(c.months[i] || 0);
+        monthTotals[i - 1] += v;
+        monthCells += '<td class="num month-col">' + (v ? fmtMoney(v) : "-") + '</td>';
+      }
+      return '<tr data-id="' + c.id + '">' +
+        '<td class="cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
+        '<td><span class="cat-chip">' + esc(c.category) + '</span></td>' +
+        '<td>' + esc(c.assignee) + '</td>' +
+        monthCells +
+        '<td class="num" style="font-weight:700;">' + fmtMoney(rowTotal) + '</td>' +
+        '<td class="cell-memo" title="' + esc((c.due || "") + (c.note ? " · " + c.note : "")) + '">' + esc(c.due || "-") + '</td>' +
+        '<td><div class="row-actions">' +
+        '<button class="icon-btn" data-cost-edit="' + c.id + '" title="수정" aria-label="수정">' + iconEdit() + '</button>' +
+        '<button class="icon-btn" data-cost-del="' + c.id + '" title="삭제" aria-label="삭제">' + iconTrash() + '</button>' +
+        '</div></td></tr>';
+    }).join("");
+    var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
+    var thead = '<thead><tr><th>항목</th><th>구분</th><th>담당자</th>' +
+      MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
+      '<th>합계</th><th>납부일(비고)</th><th></th></tr></thead>';
+    var tfoot = '<tfoot><tr><td colspan="3">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td colspan="2"></td></tr></tfoot>';
+    var wrap = document.getElementById("cost-table");
+    wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
+    wrap.querySelectorAll("[data-cost-edit]").forEach(function (btn) {
+      btn.addEventListener("click", function () { openCostModal(btn.getAttribute("data-cost-edit")); });
+    });
+    wrap.querySelectorAll("[data-cost-del]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-cost-del");
+        if (confirm("이 비용 항목을 삭제할까요?")) {
+          state.costItems = state.costItems.filter(function (c) { return c.id !== id; });
+          saveCostItems();
+          refreshAll();
+          toast("삭제했습니다.");
+        }
+      });
+    });
+  }
+
+  function renderCostView() {
+    buildCostYearSelect();
+    renderCostKpis();
+    renderCostTable();
+  }
+
+  function fillCostCategorySelect(selected) {
+    var sel = document.getElementById("f-cost-category");
+    sel.innerHTML = COST_CATEGORIES.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join("");
+    if (selected) sel.value = selected;
+  }
+
+  function buildCostMonthGrid(months) {
+    var grid = document.getElementById("cost-month-grid");
+    grid.innerHTML = MONTH_LABELS.map(function (label, idx) {
+      var m = idx + 1;
+      var v = months && months[m] ? months[m] : "";
+      return '<div class="field"><label for="f-cost-m' + m + '">' + label + '</label>' +
+        '<input type="number" min="0" step="1" id="f-cost-m' + m + '" value="' + v + '" /></div>';
+    }).join("");
+  }
+
+  function openCostModal(id) {
+    var form = document.getElementById("cost-form");
+    form.reset();
+    document.getElementById("cost-modal-delete").style.display = "none";
+    fillCostCategorySelect();
+    if (id) {
+      var c = state.costItems.find(function (x) { return x.id === id; });
+      if (!c) return;
+      document.getElementById("cost-modal-title").textContent = "비용 항목 수정";
+      document.getElementById("cost-modal-sub").textContent = c.year + "년 · " + c.category;
+      document.getElementById("f-cost-id").value = c.id;
+      document.getElementById("f-cost-name").value = c.name;
+      fillCostCategorySelect(c.category);
+      document.getElementById("f-cost-assignee").value = c.assignee;
+      document.getElementById("f-cost-due").value = c.due || "";
+      document.getElementById("f-cost-note").value = c.note || "";
+      document.getElementById("f-cost-recurring").checked = !!c.recurring;
+      buildCostMonthGrid(c.months);
+      document.getElementById("cost-modal-delete").style.display = "inline-flex";
+      document.getElementById("cost-modal-delete").setAttribute("data-cost-del-id", c.id);
+    } else {
+      document.getElementById("cost-modal-title").textContent = "비용 항목 추가";
+      document.getElementById("cost-modal-sub").textContent = state.costYear + "년";
+      document.getElementById("f-cost-id").value = "";
+      document.getElementById("f-cost-assignee").value = "총무지원팀";
+      buildCostMonthGrid(null);
+    }
+    document.getElementById("cost-modal-backdrop").classList.add("active");
+    document.getElementById("f-cost-name").focus();
+  }
+  function closeCostModal() { document.getElementById("cost-modal-backdrop").classList.remove("active"); }
+
+  document.getElementById("btn-add-cost").addEventListener("click", function () { openCostModal(null); });
+  document.getElementById("cost-modal-cancel").addEventListener("click", closeCostModal);
+  document.getElementById("cost-modal-backdrop").addEventListener("click", function (e) { if (e.target === this) closeCostModal(); });
+  document.getElementById("cost-modal-delete").addEventListener("click", function () {
+    var id = this.getAttribute("data-cost-del-id");
+    if (confirm("이 비용 항목을 삭제할까요?")) {
+      state.costItems = state.costItems.filter(function (c) { return c.id !== id; });
+      saveCostItems();
+      closeCostModal();
+      refreshAll();
+      toast("삭제했습니다.");
+    }
+  });
+
+  document.getElementById("cost-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = document.getElementById("f-cost-id").value;
+    var months = emptyMonths();
+    for (var i = 1; i <= 12; i++) {
+      var v = document.getElementById("f-cost-m" + i).value;
+      months[i] = v ? Number(v) : 0;
+    }
+    var data = {
+      year: state.costYear,
+      name: document.getElementById("f-cost-name").value.trim(),
+      category: document.getElementById("f-cost-category").value,
+      assignee: document.getElementById("f-cost-assignee").value.trim(),
+      due: document.getElementById("f-cost-due").value.trim(),
+      note: document.getElementById("f-cost-note").value.trim(),
+      recurring: document.getElementById("f-cost-recurring").checked,
+      months: months
+    };
+    if (id) {
+      var idx = state.costItems.findIndex(function (c) { return c.id === id; });
+      data.year = state.costItems[idx].year;
+      state.costItems[idx] = Object.assign({}, state.costItems[idx], data);
+      toast("수정했습니다.");
+    } else {
+      data.id = uid();
+      state.costItems.push(data);
+      toast("추가했습니다.");
+    }
+    saveCostItems();
+    closeCostModal();
+    refreshAll();
+  });
+
+  document.getElementById("btn-export-cost-csv").addEventListener("click", function () {
+    var items = costItemsForYear(state.costYear);
+    var header = ["연도", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
+    var lines = [header.join(",")];
+    items.forEach(function (c) {
+      var monthVals = [];
+      for (var i = 1; i <= 12; i++) monthVals.push(c.months[i] || 0);
+      var row = [c.year, c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
+        .concat(monthVals, [costMonthTotal(c), c.due || "", c.note || ""])
+        .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; });
+      lines.push(row.join(","));
+    });
+    downloadOrFallback("총무팀_비용관리_" + state.costYear + ".csv", "﻿" + lines.join("\n"), "text/csv");
+  });
+
   /* ---------------- Modal (add/edit) ---------------- */
   function fillCategorySelect(lockCat) {
     var sel = document.getElementById("f-category");
@@ -882,7 +1219,7 @@
   document.getElementById("btn-add-record").addEventListener("click", function () { openModal(null); });
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-backdrop").addEventListener("click", function (e) { if (e.target === this) closeModal(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeModal(); closeCostModal(); } });
 
   document.getElementById("modal-delete").addEventListener("click", function () {
     var id = this.getAttribute("data-del-id");
@@ -1001,11 +1338,22 @@
     });
     if (state.activeView === "overview") renderOverview();
     else if (state.activeView === "records") renderRecordsTable();
+    else if (state.activeView === "cost") renderCostView();
     else if (state.activeView.indexOf("cat:") === 0) renderCategoryView(state.activeView.slice(4));
   }
 
   function init() {
     state.records = loadRecords();
+    state.costItems = loadCostItems();
+    if (state.costItems.length === 0 && !store.getItem(COST_SEEDED_KEY)) {
+      state.costItems = seedCostItems2026();
+      saveCostItems();
+    }
+    store.setItem(COST_SEEDED_KEY, "1");
+    if (state.costItems.length) {
+      var years = state.costItems.map(function (c) { return c.year; });
+      state.costYear = Math.max.apply(null, years);
+    }
     buildCategoryViews();
     buildSidebar();
     setView("overview");

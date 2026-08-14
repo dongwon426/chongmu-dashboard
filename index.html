@@ -1637,6 +1637,33 @@
     else if (state.activeView.indexOf("cat:") === 0) renderCategoryView(state.activeView.slice(4));
   }
 
+  var AMOUNT_PATCHES = [
+    {
+      id: "2026-esone-1to7",
+      items: [
+        { vendor: "에스원", name: "신사옥_토펙삼성빌딩", months: { 1: 968000, 2: 968000, 3: 968000, 4: 968000, 5: 968000, 6: 968000, 7: 968000 } },
+        { vendor: "에스원", name: "신사옥_EV제어_보증금 100000", months: { 1: 110000, 2: 110000, 3: 110000, 4: 110000, 5: 110000, 6: 110000, 7: 110000 } },
+        { vendor: "에스원", name: "신사옥_2층 사무실", months: { 1: 110000, 2: 110000, 3: 110000, 4: 110000, 5: 110000, 6: 110000, 7: 110000 } }
+      ]
+    }
+  ];
+  function applyAmountPatches() {
+    var changed = false;
+    AMOUNT_PATCHES.forEach(function (patch) {
+      var flagKey = "chongmu.costitems.patch." + patch.id + ".v1";
+      if (store.getItem(flagKey)) return;
+      patch.items.forEach(function (p) {
+        var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
+        if (target) {
+          Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; });
+          changed = true;
+        }
+      });
+      store.setItem(flagKey, "1");
+    });
+    if (changed) saveCostItems();
+  }
+
   function init() {
     state.records = loadRecords();
     state.costItems = loadCostItems();
@@ -1650,6 +1677,7 @@
       saveCostItems();
       store.setItem(VENDOR_SEEDED_KEY, "1");
     }
+    applyAmountPatches();
     if (state.costItems.length) {
       var years = state.costItems.map(function (c) { return c.year; });
       state.costYear = Math.max.apply(null, years);

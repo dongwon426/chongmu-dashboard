@@ -1257,8 +1257,7 @@
 
   /* ---------------- Cost management ---------------- */
   function costItemsForYear(year) {
-    return state.costItems.filter(function (c) { return c.year === year; })
-      .sort(function (a, b) { return a.name.localeCompare(b.name, "ko"); });
+    return state.costItems.filter(function (c) { return c.year === year; });
   }
 
   function buildCostYearSelect() {

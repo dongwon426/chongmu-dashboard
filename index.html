@@ -287,6 +287,12 @@
   th.sticky-actions, td.sticky-actions { position: sticky; right: 0; background: var(--surface); box-shadow: -6px 0 8px -6px rgba(0,0,0,0.25); }
   tr:hover td.sticky-actions { background: var(--surface-2); }
   table.cost tfoot td.sticky-actions { background: var(--surface-2); }
+  th.sticky-left, td.sticky-left { position: sticky; background: var(--surface); }
+  th.sticky-left-1, td.sticky-left-1 { left: 0; }
+  th.sticky-left-3, td.sticky-left-3 { box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+  tr:hover td.sticky-left { background: var(--surface-2); }
+  table.cost tfoot td.sticky-left { background: var(--surface-2); }
+  thead th.sticky-left { z-index: 7; }
   .cat-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
   .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .month-grid .field label { font-size: 11px; }
@@ -1357,9 +1363,9 @@
       }
       var status = c.status || "진행중";
       return '<tr data-id="' + c.id + '">' +
-        '<td><span class="pill st-' + status + '">' + status + '</span></td>' +
-        '<td>' + (c.vendor ? esc(c.vendor) : '<span class="cell-memo">-</span>') + '</td>' +
-        '<td class="cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
+        '<td class="sticky-left sticky-left-1"><span class="pill st-' + status + '">' + status + '</span></td>' +
+        '<td class="sticky-left sticky-left-2">' + (c.vendor ? esc(c.vendor) : '<span class="cell-memo">-</span>') + '</td>' +
+        '<td class="sticky-left sticky-left-3 cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
         '<td><span class="cat-chip">' + esc(c.category) + '</span></td>' +
         '<td>' + esc(c.assignee) + '</td>' +
         monthCells +
@@ -1373,10 +1379,10 @@
         '</div></td></tr>';
     }).join("");
     var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
-    var thead = '<thead><tr><th>상태</th><th>거래처</th><th>항목</th><th>구분</th><th>담당자</th>' +
+    var thead = '<thead><tr><th class="sticky-left sticky-left-1">상태</th><th class="sticky-left sticky-left-2">거래처</th><th class="sticky-left sticky-left-3">항목</th><th>구분</th><th>담당자</th>' +
       MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
       '<th>합계</th><th>납부일(비고)</th><th class="sticky-actions">관리</th></tr></thead>';
-    var tfoot = '<tfoot><tr><td colspan="5">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
+    var tfoot = '<tfoot><tr><td class="sticky-left sticky-left-1" colspan="5">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
     var wrap = document.getElementById("cost-table");
     wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
     wrap.querySelectorAll("[data-cost-up]").forEach(function (btn) {
@@ -1399,6 +1405,21 @@
         }
       });
     });
+    applyCostStickyLeftOffsets();
+  }
+
+  function applyCostStickyLeftOffsets() {
+    var table = document.getElementById("cost-table");
+    if (!table) return;
+    var headRow = table.querySelector("thead tr");
+    if (!headRow) return;
+    var col1 = headRow.querySelector(".sticky-left-1");
+    var col2 = headRow.querySelector(".sticky-left-2");
+    if (!col1 || !col2) return;
+    var offset2 = col1.getBoundingClientRect().width;
+    var offset3 = offset2 + col2.getBoundingClientRect().width;
+    table.querySelectorAll(".sticky-left-2").forEach(function (el) { el.style.left = offset2 + "px"; });
+    table.querySelectorAll(".sticky-left-3").forEach(function (el) { el.style.left = offset3 + "px"; });
   }
 
   function renderCostView() {

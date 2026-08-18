@@ -252,6 +252,7 @@
   .pill.st-진행중 { background: var(--info-tint); color: var(--info); }
   .pill.st-완료 { background: var(--good-tint); color: var(--good); }
   .pill.st-보류 { background: var(--warn-tint); color: var(--warn); }
+  .pill.st-종료 { background: var(--bad-tint); color: var(--bad); }
 
   /* filters */
   .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
@@ -410,6 +411,12 @@
         <div class="cost-toolbar">
           <label for="cost-year-select">연도</label>
           <select id="cost-year-select"></select>
+          <label for="cost-status-select">상태</label>
+          <select id="cost-status-select">
+            <option value="">전체</option>
+            <option value="진행중">진행중인 거래처</option>
+            <option value="종료">종료된 거래처</option>
+          </select>
         </div>
         <div class="kpi-row" id="cost-kpi-row"></div>
         <div class="table-wrap" id="cost-table-wrap">
@@ -517,6 +524,13 @@
         </div>
       </div>
       <div class="field">
+        <label for="f-cost-status">거래처 상태</label>
+        <select id="f-cost-status">
+          <option value="진행중">진행중</option>
+          <option value="종료">종료</option>
+        </select>
+      </div>
+      <div class="field">
         <label for="f-cost-due">납부일(기간)</label>
         <input id="f-cost-due" type="text" placeholder="예: 매년 3월 07일 이전" />
       </div>
@@ -554,6 +568,7 @@
   var COST_KEY = "chongmu.costitems.v1";
   var COST_SEEDED_KEY = "chongmu.costitems.seeded.v1";
   var VENDOR_SEEDED_KEY = "chongmu.costitems.vendorseeded.v1";
+  var STATUS_SEEDED_KEY = "chongmu.costitems.statusseeded.v1";
 
   var memoryStore = {};
   var store = (function () {
@@ -621,6 +636,7 @@
 
   var STATUS_LIST = ["대기", "진행중", "완료", "보류"];
   var COST_CATEGORIES = ["세금", "보험계약", "자격·면허", "필수점검", "고정지출", "기부", "기타"];
+  var COST_STATUS_LIST = ["진행중", "종료"];
   var MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
   function emptyMonths() {
@@ -652,7 +668,7 @@
     ];
     return rows.map(function (r) {
       return {
-        id: uid(), year: 2026, vendor: "", name: r[0], category: r[1], recurring: false,
+        id: uid(), year: 2026, vendor: "", name: r[0], category: r[1], recurring: false, status: "진행중",
         assignee: "총무지원팀", due: r[2], note: r[3], months: oneTimeCost(r[4], r[5])
       };
     });
@@ -937,7 +953,7 @@
     ];
     return pairs.map(function (p) {
       return {
-        id: uid(), year: 2026, vendor: p[0], name: p[1], category: "고정지출", recurring: true,
+        id: uid(), year: 2026, vendor: p[0], name: p[1], category: "고정지출", recurring: true, status: "진행중",
         assignee: "총무지원팀", due: "", note: "월지출내역 캡처본 기준, 금액 미입력", months: emptyMonths()
       };
     });
@@ -954,6 +970,7 @@
     records: [],
     costItems: [],
     costYear: new Date().getFullYear(),
+    costStatusFilter: "",
     activeView: "overview",
     filters: { q: "", category: "", assignee: "", status: "", from: "", to: "" },
     editingId: null,
@@ -1262,6 +1279,14 @@
     return state.costItems.filter(function (c) { return c.year === year; });
   }
 
+  function filteredCostItems() {
+    var items = costItemsForYear(state.costYear);
+    if (state.costStatusFilter) {
+      items = items.filter(function (c) { return (c.status || "진행중") === state.costStatusFilter; });
+    }
+    return items;
+  }
+
   function buildCostYearSelect() {
     var years = state.costItems.map(function (c) { return c.year; });
     var thisYear = new Date().getFullYear();
@@ -1275,23 +1300,31 @@
       renderCostKpis();
       renderCostTable();
     };
+    var statusSel = document.getElementById("cost-status-select");
+    statusSel.value = state.costStatusFilter;
+    statusSel.onchange = function () {
+      state.costStatusFilter = statusSel.value;
+      renderCostKpis();
+      renderCostTable();
+    };
   }
 
   function renderCostKpis() {
-    var items = costItemsForYear(state.costYear);
+    var items = filteredCostItems();
     var total = items.reduce(function (sum, c) { return sum + costMonthTotal(c); }, 0);
     var recurring = items.filter(function (c) { return c.recurring; }).length;
+    var label = state.costYear + "년" + (state.costStatusFilter ? " " + state.costStatusFilter : "") + " 총 지출";
     document.getElementById("cost-kpi-row").innerHTML =
-      kpiCard(state.costYear + "년 총 지출", fmtMoney(total), "원") +
+      kpiCard(label, fmtMoney(total), "원") +
       kpiCard("관리 항목 수", items.length, "건") +
       kpiCard("매월 반복 항목", recurring, "건", "info");
   }
 
   function renderCostTable() {
-    var items = costItemsForYear(state.costYear);
+    var items = filteredCostItems();
     var outer = document.getElementById("cost-table-wrap");
     if (!items.length) {
-      outer.innerHTML = '<div class="empty-state">' + state.costYear + '년에 등록된 비용 항목이 없습니다. "+ 항목 추가"로 등록해보세요.</div>';
+      outer.innerHTML = '<div class="empty-state">' + state.costYear + '년' + (state.costStatusFilter ? " " + state.costStatusFilter : "") + ' 비용 항목이 없습니다. "+ 항목 추가"로 등록해보세요.</div>';
       return;
     }
     outer.innerHTML = '<table class="records cost" id="cost-table"></table>';
@@ -1306,7 +1339,9 @@
         monthTotals[i - 1] += v;
         monthCells += '<td class="num month-col">' + (v ? fmtMoney(v) : "-") + '</td>';
       }
+      var status = c.status || "진행중";
       return '<tr data-id="' + c.id + '">' +
+        '<td><span class="pill st-' + status + '">' + status + '</span></td>' +
         '<td>' + (c.vendor ? esc(c.vendor) : '<span class="cell-memo">-</span>') + '</td>' +
         '<td class="cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
         '<td><span class="cat-chip">' + esc(c.category) + '</span></td>' +
@@ -1320,10 +1355,10 @@
         '</div></td></tr>';
     }).join("");
     var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
-    var thead = '<thead><tr><th>거래처</th><th>항목</th><th>구분</th><th>담당자</th>' +
+    var thead = '<thead><tr><th>상태</th><th>거래처</th><th>항목</th><th>구분</th><th>담당자</th>' +
       MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
       '<th>합계</th><th>납부일(비고)</th><th class="sticky-actions">관리</th></tr></thead>';
-    var tfoot = '<tfoot><tr><td colspan="4">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
+    var tfoot = '<tfoot><tr><td colspan="5">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
     var wrap = document.getElementById("cost-table");
     wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
     wrap.querySelectorAll("[data-cost-edit]").forEach(function (btn) {
@@ -1382,6 +1417,7 @@
       document.getElementById("f-cost-due").value = c.due || "";
       document.getElementById("f-cost-note").value = c.note || "";
       document.getElementById("f-cost-recurring").checked = !!c.recurring;
+      document.getElementById("f-cost-status").value = c.status || "진행중";
       buildCostMonthGrid(c.months);
       document.getElementById("cost-modal-delete").style.display = "inline-flex";
       document.getElementById("cost-modal-delete").setAttribute("data-cost-del-id", c.id);
@@ -1390,6 +1426,7 @@
       document.getElementById("cost-modal-sub").textContent = state.costYear + "년";
       document.getElementById("f-cost-id").value = "";
       document.getElementById("f-cost-assignee").value = "총무지원팀";
+      document.getElementById("f-cost-status").value = "진행중";
       buildCostMonthGrid(null);
     }
     document.getElementById("cost-modal-backdrop").classList.add("active");
@@ -1428,6 +1465,7 @@
       due: document.getElementById("f-cost-due").value.trim(),
       note: document.getElementById("f-cost-note").value.trim(),
       recurring: document.getElementById("f-cost-recurring").checked,
+      status: document.getElementById("f-cost-status").value,
       months: months
     };
     if (id) {
@@ -1446,13 +1484,13 @@
   });
 
   document.getElementById("btn-export-cost-csv").addEventListener("click", function () {
-    var items = costItemsForYear(state.costYear);
-    var header = ["연도", "거래처", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
+    var items = filteredCostItems();
+    var header = ["연도", "상태", "거래처", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
     var lines = [header.join(",")];
     items.forEach(function (c) {
       var monthVals = [];
       for (var i = 1; i <= 12; i++) monthVals.push(c.months[i] || 0);
-      var row = [c.year, c.vendor || "", c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
+      var row = [c.year, c.status || "진행중", c.vendor || "", c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
         .concat(monthVals, [costMonthTotal(c), c.due || "", c.note || ""])
         .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; });
       lines.push(row.join(","));
@@ -1719,6 +1757,31 @@
     if (changed) saveCostItems();
   }
 
+  var ENDED_VENDOR_ITEMS_2026 = [
+    { vendor: "KT", name: "한양대 제 6,7 생활관_21.09.06" },
+    { vendor: "KT", name: "송도캠퍼스_22.12.26" },
+    { vendor: "KT", name: "양양펜타와이투_22.12.27" },
+    { vendor: "KT", name: "우암1구역_23.01.25" },
+    { vendor: "KT", name: "춘천 조양동_231106" },
+    { vendor: "KT", name: "A196 춘천 방룡단장_20240201" },
+    { vendor: "KT", name: "수포 김포 간부숙소 2개지역_20240913" },
+    { vendor: "KT", name: "원주 A454_25.03.10" }
+  ];
+  function applyStatusDefaults() {
+    var changed = false;
+    state.costItems.forEach(function (c) {
+      if (!c.status) { c.status = "진행중"; changed = true; }
+    });
+    if (!store.getItem(STATUS_SEEDED_KEY)) {
+      ENDED_VENDOR_ITEMS_2026.forEach(function (p) {
+        var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
+        if (target) { target.status = "종료"; changed = true; }
+      });
+      store.setItem(STATUS_SEEDED_KEY, "1");
+    }
+    if (changed) saveCostItems();
+  }
+
   function init() {
     state.records = loadRecords();
     state.costItems = loadCostItems();
@@ -1733,6 +1796,7 @@
       store.setItem(VENDOR_SEEDED_KEY, "1");
     }
     applyAmountPatches();
+    applyStatusDefaults();
     if (state.costItems.length) {
       var years = state.costItems.map(function (c) { return c.year; });
       state.costYear = Math.max.apply(null, years);

@@ -570,6 +570,7 @@
   var COST_KEY = "chongmu.costitems.v1";
   var COST_SEEDED_KEY = "chongmu.costitems.seeded.v1";
   var VENDOR_SEEDED_KEY = "chongmu.costitems.vendorseeded.v1";
+  var ASSET_REFS_SEEDED_KEY = "chongmu.records.assetrefsseeded.v1";
 
   var memoryStore = {};
   var store = (function () {
@@ -989,6 +990,42 @@
     try { return JSON.parse(store.getItem(RECORDS_KEY)) || []; } catch (e) { return []; }
   }
   function saveRecords() { store.setItem(RECORDS_KEY, JSON.stringify(state.records)); }
+
+  function seedAssetFolderRefs() {
+    var rows = [
+      ["asset-building", "계약서 및 도면 (임차인별)", "OneDrive 폴더 참고용 — 임차인별 임대차 계약서·도면은 원본 폴더에서 확인"],
+      ["asset-building", "관리비 관리", "OneDrive 폴더 참고용"],
+      ["asset-building", "오에스개발(용역)_신사옥 건물관리", "OneDrive 폴더 참고용"],
+      ["asset-building", "신사옥 입점관련", "OneDrive 폴더 참고용"],
+      ["asset-building", "건물사용명세서 제출 건", "OneDrive 폴더 참고용"],
+      ["asset-building", "신사옥 교통유발부담금 감면", "OneDrive 폴더 참고용 (비용 관리의 '교통유발 부담금' 항목과 연관)"],
+      ["asset-vehicle", "업무차량 계약서", "OneDrive 폴더 참고용"],
+      ["asset-vehicle", "업무차량 고지서", "OneDrive 폴더 참고용"],
+      ["asset-vehicle", "업무차량 규정 및 운행일지", "OneDrive 폴더 참고용"],
+      ["asset-vehicle", "업무차량 세금계산서 발행", "OneDrive 폴더 참고용"],
+      ["asset-vehicle", "업무차량 사고 및 이관관련", "OneDrive 폴더 참고용"],
+      ["asset-vehicle", "업무차량 차량매도", "OneDrive 폴더 참고용"],
+      ["asset-facility", "거래처 계약서 (보성)", "OneDrive 폴더 참고용"],
+      ["asset-facility", "거래처 계약서 (삼삼이엔씨)", "OneDrive 폴더 참고용"],
+      ["asset-facility", "거래처 계약서 (에스엔피)", "OneDrive 폴더 참고용"],
+      ["asset-facility", "거래처 계약서 (오에스개발)", "OneDrive 폴더 참고용"],
+      ["asset-facility", "거래처 계약서 (현대엘리베이터)", "OneDrive 폴더 참고용"],
+      ["asset-facility", "북카페 운영 및 관리", "OneDrive 폴더 참고용"],
+      ["asset-equipment", "거래처 계약서 (오에이사무기기)", "OneDrive 폴더 참고용 — 상세 임대 내역은 비용 관리 탭 참고"],
+      ["asset-fire", "2025년 비상대응 훈련", "OneDrive 폴더 참고용"],
+      ["asset-fire", "소방 안전관리", "OneDrive 폴더 참고용"],
+      ["asset-fire", "정화조 관련", "OneDrive 폴더 참고용"],
+      ["asset-fire", "토펙삼성빌딩 소방전기 평면도 PDF", "OneDrive 폴더 참고용"]
+    ];
+    return rows.map(function (r) {
+      return {
+        id: uid(), categoryId: itemIndex[r[0]].cat.id, itemId: r[0], title: r[1],
+        date: todayISO(), status: "진행중", assignee: "총무지원팀",
+        amount: null, quantity: null, site: "", memo: r[2],
+        createdAt: Date.now(), updatedAt: Date.now()
+      };
+    });
+  }
 
   function loadCostItems() {
     try { return JSON.parse(store.getItem(COST_KEY)) || []; } catch (e) { return []; }
@@ -1955,6 +1992,11 @@
 
   function init() {
     state.records = loadRecords();
+    if (!store.getItem(ASSET_REFS_SEEDED_KEY)) {
+      state.records = state.records.concat(seedAssetFolderRefs());
+      saveRecords();
+      store.setItem(ASSET_REFS_SEEDED_KEY, "1");
+    }
     state.costItems = loadCostItems();
     if (state.costItems.length === 0 && !store.getItem(COST_SEEDED_KEY)) {
       state.costItems = seedCostItems2026();

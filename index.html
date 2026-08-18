@@ -1855,6 +1855,16 @@
         { vendor: "오에이사무기기", name: "양양펜타와이투_24.04.1", months: { 1: 126500, 2: 50600 } },
         { vendor: "오에이사무기기", name: "송도글로벌캠퍼스_22.11.09", months: { 1: 126500, 2: 42166 } }
       ]
+    },
+    {
+      id: "2026-fix-ambiguous-month",
+      items: [
+        { vendor: "오에이사무기기", name: "C205 2층 임원실", clearMonths: [1], months: { 7: 69116 } },
+        { vendor: "오에이사무기기", name: "C325 8층 임원실_25.04.02", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1월에 반영" },
+        { vendor: "KT", name: "한양대 제 6,7 생활관_21.09.06", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 2월에 반영" },
+        { vendor: "오에이사무기기", name: "울산현대자동차_23.06.16", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1월에 반영" },
+        { vendor: "KT", name: "송도캠퍼스_22.12.26", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1,2월에 반영" }
+      ]
     }
   ];
   function applyAmountPatches() {
@@ -1865,7 +1875,9 @@
       patch.items.forEach(function (p) {
         var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
         if (target) {
-          Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; });
+          if (p.clearMonths) { p.clearMonths.forEach(function (m) { target.months[m] = 0; }); }
+          if (p.months) { Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; }); }
+          if (p.note) { target.note = p.note; }
           changed = true;
         }
       });

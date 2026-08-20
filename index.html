@@ -199,9 +199,12 @@
   .nav-item .count { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
   .nav-item.active .count { color: var(--accent-strong); }
 
-  main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 24px 28px 60px; }
+  main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 20px 28px 20px; }
   .view { display: none; max-width: 1180px; margin: 0 auto; }
   .view.active { display: block; }
+  #view-cost { max-width: none; }
+  #view-cost.active { display: flex; flex-direction: column; height: 100%; }
+  #view-cost .table-wrap { flex: 1; min-height: 0; max-height: none; }
   .view-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
   .view-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .view-head .desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
@@ -277,7 +280,11 @@
   .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
 
   /* cost view */
-  .cost-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  #view-cost .view-head { margin-bottom: 12px; }
+  #view-cost .kpi-row { margin-bottom: 12px; }
+  #view-cost .kpi-card { padding: 10px 16px; }
+  #view-cost .kpi-card .value { font-size: 22px; margin-top: 2px; }
+  .cost-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex: none; }
   .cost-toolbar label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
   .cost-toolbar select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-weight: 600; }
   table.cost th, table.cost td { white-space: nowrap; }
@@ -325,6 +332,7 @@
 </style>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <div id="login-screen">
   <div class="login-card">
@@ -410,10 +418,12 @@
             <div class="desc">연도별 고정비·지출 항목을 관리합니다. 매달 반복되는 항목은 월별 금액을 각각 입력하세요.</div>
           </div>
           <div class="view-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-import-excel" style="display:none;">엑셀에서 가져오기</button>
             <button class="btn btn-ghost btn-sm" id="btn-export-cost-csv">CSV 내보내기</button>
             <button class="btn btn-primary btn-sm" id="btn-add-cost">+ 항목 추가</button>
           </div>
         </div>
+        <input type="file" class="file-input" id="excel-import-input" accept=".xlsx" />
         <div class="cost-toolbar">
           <label for="cost-year-select">연도</label>
           <select id="cost-year-select"></select>
@@ -1579,6 +1589,113 @@
     });
     downloadOrFallback("총무팀_비용관리_" + state.costYear + ".csv", "﻿" + lines.join("\n"), "text/csv");
   });
+
+  if (window.XLSX) { document.getElementById("btn-import-excel").style.display = ""; }
+  document.getElementById("btn-import-excel").addEventListener("click", function () {
+    document.getElementById("excel-import-input").click();
+  });
+  document.getElementById("excel-import-input").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    e.target.value = "";
+    if (!file || !window.XLSX) return;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var result;
+      try {
+        var wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array" });
+        result = importCostAmountsFromWorkbook(wb);
+      } catch (err) {
+        toast("엑셀 파일을 읽는 중 오류가 발생했습니다.");
+        return;
+      }
+      if (result.updated > 0) { saveCostItems(); refreshAll(); }
+      toast(result.updated + "개 항목 업데이트, " + result.skipped + "건은 일치하는 항목이 없어 건너뜀");
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function findSheetHeader(rows, mustHaveTexts, maxScanRows) {
+    for (var r = 0; r < Math.min(rows.length, maxScanRows || 10); r++) {
+      var row = rows[r];
+      if (!row) continue;
+      var indices = mustHaveTexts.map(function (t) { return row.indexOf(t); });
+      if (indices.every(function (idx) { return idx !== -1; })) {
+        return { row: r, indices: indices };
+      }
+    }
+    return null;
+  }
+
+  function parseAmount(raw) {
+    if (raw === "" || raw === undefined || raw === null) return null;
+    var num = typeof raw === "number" ? raw : parseFloat(String(raw).replace(/,/g, ""));
+    return isNaN(num) ? null : num;
+  }
+
+  function importCostAmountsFromWorkbook(wb) {
+    var updated = 0, skipped = 0;
+    var yearSuffix = String(state.costYear).slice(2);
+
+    var monthlySheetName = wb.SheetNames.find(function (n) { return n.indexOf("월지출") !== -1; });
+    if (monthlySheetName) {
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[monthlySheetName], { header: 1, defval: "" });
+      var head = findSheetHeader(rows, ["거래처", "내역"]);
+      if (head) {
+        var vendorCol = head.indices[0], itemCol = head.indices[1];
+        var monthCols = {};
+        rows[head.row].forEach(function (cell, idx) {
+          if (typeof cell === "string") {
+            var m = cell.match(/^(\d{2})년(\d{1,2})월$/);
+            if (m && m[1] === yearSuffix) monthCols[parseInt(m[2], 10)] = idx;
+          }
+        });
+        var lastVendor = "";
+        for (var r = head.row + 1; r < rows.length; r++) {
+          var row = rows[r];
+          if (!row) continue;
+          if (row[vendorCol]) lastVendor = String(row[vendorCol]).trim();
+          var itemName = row[itemCol] ? String(row[itemCol]).trim() : "";
+          if (!itemName) continue;
+          var target = state.costItems.find(function (c) { return c.vendor === lastVendor && c.name === itemName && c.year === state.costYear; });
+          if (!target) { skipped++; continue; }
+          var changed = false;
+          Object.keys(monthCols).forEach(function (m) {
+            var num = parseAmount(row[monthCols[m]]);
+            if (num !== null) { target.months[m] = num; changed = true; }
+          });
+          if (changed) updated++;
+        }
+      }
+    }
+
+    var annualSheetName = wb.SheetNames.find(function (n) { return n.indexOf("고정지출") !== -1; });
+    if (annualSheetName) {
+      var rows2 = XLSX.utils.sheet_to_json(wb.Sheets[annualSheetName], { header: 1, defval: "" });
+      var head2 = findSheetHeader(rows2, ["월", "항목", "금액"], 6);
+      if (head2) {
+        var monthColIdx = head2.indices[0], itemColIdx = head2.indices[1], amountColIdx = head2.indices[2];
+        var lastMonth = null;
+        for (var r2 = head2.row + 1; r2 < rows2.length; r2++) {
+          var row2 = rows2[r2];
+          if (!row2) continue;
+          if (row2[monthColIdx]) {
+            var mm = String(row2[monthColIdx]).match(/(\d{1,2})월/);
+            if (mm) lastMonth = parseInt(mm[1], 10);
+          }
+          var itemName2 = row2[itemColIdx] ? String(row2[itemColIdx]).trim() : "";
+          if (!itemName2 || itemName2 === "-" || !lastMonth) continue;
+          var num2 = parseAmount(row2[amountColIdx]);
+          if (num2 === null) continue;
+          var target2 = state.costItems.find(function (c) { return !c.vendor && c.name === itemName2 && c.year === state.costYear; });
+          if (!target2) { skipped++; continue; }
+          target2.months[lastMonth] = num2;
+          updated++;
+        }
+      }
+    }
+
+    return { updated: updated, skipped: skipped };
+  }
 
   /* ---------------- Modal (add/edit) ---------------- */
   function fillCategorySelect(lockCat) {

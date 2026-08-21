@@ -287,6 +287,7 @@
   .cost-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex: none; }
   .cost-toolbar label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
   .cost-toolbar select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-weight: 600; }
+  .cost-toolbar .cost-search { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: 13px; width: 220px; }
   table.cost th, table.cost td { white-space: nowrap; }
   table.cost th.month-col, table.cost td.month-col { text-align: right; padding-left: 10px; padding-right: 10px; min-width: 80px; }
   table.cost td.cost-name { white-space: normal; min-width: 160px; }
@@ -394,6 +395,7 @@
             <option value="진행중">진행중인 거래처</option>
             <option value="종료">종료된 거래처</option>
           </select>
+          <input type="text" id="cost-search-input" class="cost-search" placeholder="거래처 또는 항목 검색" />
         </div>
         <div class="kpi-row" id="cost-kpi-row"></div>
         <div class="table-wrap" id="cost-table-wrap">
@@ -814,6 +816,7 @@
     costItems: [],
     costYear: new Date().getFullYear(),
     costStatusFilter: "",
+    costSearchQuery: "",
     activeView: "overview",
     filters: { q: "", category: "", assignee: "", status: "", from: "", to: "" },
     editingId: null,
@@ -893,6 +896,12 @@
     if (state.costStatusFilter) {
       items = items.filter(function (c) { return (c.status || "진행중") === state.costStatusFilter; });
     }
+    if (state.costSearchQuery) {
+      var q = state.costSearchQuery.trim().toLowerCase();
+      items = items.filter(function (c) {
+        return (c.vendor || "").toLowerCase().indexOf(q) !== -1 || (c.name || "").toLowerCase().indexOf(q) !== -1;
+      });
+    }
     return items;
   }
 
@@ -928,6 +937,13 @@
     statusSel.value = state.costStatusFilter;
     statusSel.onchange = function () {
       state.costStatusFilter = statusSel.value;
+      renderCostKpis();
+      renderCostTable();
+    };
+    var searchInput = document.getElementById("cost-search-input");
+    searchInput.value = state.costSearchQuery;
+    searchInput.oninput = function () {
+      state.costSearchQuery = searchInput.value;
       renderCostKpis();
       renderCostTable();
     };

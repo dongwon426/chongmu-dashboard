@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>총무지원팀 비용 관리</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%82%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #eef1f3;
+    --surface: #ffffff;
+    --surface-2: #f5f7f8;
+    --ink: #16202c;
+    --muted: #57636f;
+    --line: #d7dee3;
+    --accent: #8f6524;
+    --accent-strong: #6f4e1a;
+    --accent-tint: #f3e8d4;
+    --good: #2f7d52;
+    --good-tint: #e3f1e9;
+    --info: #2f6fb0;
+    --info-tint: #e4edf7;
+    --warn: #b8862c;
+    --warn-tint: #f7edd9;
+    --bad: #b2432f;
+    --bad-tint: #f8e7e2;
+    --shadow: 0 1px 2px rgba(22,32,44,0.06), 0 8px 24px rgba(22,32,44,0.08);
+    --font-ui: -apple-system, BlinkMacSystemFont, "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "D2Coding", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f151d;
+      --surface: #161f2b;
+      --surface-2: #1b2532;
+      --ink: #e7ecf1;
+      --muted: #94a2af;
+      --line: #2b3648;
+      --accent: #d3a557;
+      --accent-strong: #e8c081;
+      --accent-tint: #2c2417;
+      --good: #55b384;
+      --good-tint: #163326;
+      --info: #6aa4e0;
+      --info-tint: #182a3c;
+      --warn: #d8ac57;
+      --warn-tint: #332b17;
+      --bad: #e07a63;
+      --bad-tint: #34201b;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f151d;
+    --surface: #161f2b;
+    --surface-2: #1b2532;
+    --ink: #e7ecf1;
+    --muted: #94a2af;
+    --line: #2b3648;
+    --accent: #d3a557;
+    --accent-strong: #e8c081;
+    --accent-tint: #2c2417;
+    --good: #55b384;
+    --good-tint: #163326;
+    --info: #6aa4e0;
+    --info-tint: #182a3c;
+    --warn: #d8ac57;
+    --warn-tint: #332b17;
+    --bad: #e07a63;
+    --bad-tint: #34201b;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  table { border-collapse: collapse; width: 100%; }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  ::selection { background: var(--accent-tint); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* ---------- Login screen ---------- */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      linear-gradient(180deg, transparent, transparent 39px, var(--line) 39px, var(--line) 40px) 0 0/100% 40px,
+      var(--bg);
+  }
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 32px 28px 28px;
+  }
+  .login-logo {
+    background: #fff;
+    border-radius: 8px;
+    padding: 9px 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+  }
+  .login-logo img { display: block; height: 26px; width: auto; }
+  .login-card h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  .login-card .sub { color: var(--muted); font-size: 13px; margin: 6px 0 22px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-weight: 600; font-size: 13.5px;
+    cursor: pointer;
+    transition: filter 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn:active { filter: brightness(0.96); }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 10px 16px; margin-top: 4px; }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-danger { background: transparent; border-color: var(--line); color: var(--bad); }
+  .btn-danger:hover { background: var(--bad-tint); }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+  .login-error {
+    display: none;
+    background: var(--bad-tint); color: var(--bad);
+    border-radius: 6px; padding: 9px 11px; font-size: 12.5px; margin-bottom: 14px;
+  }
+  .login-hint { font-size: 11.5px; color: var(--muted); margin-top: 14px; text-align: center; }
+
+  /* ---------- App shell ---------- */
+  #app { display: none; height: 100vh; flex-direction: column; }
+  #app.active { display: flex; }
+  .topbar {
+    height: 56px; flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .topbar-left .brand-logo { background: #fff; border-radius: 6px; padding: 4px 9px; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+  .topbar-left .brand-logo img { display: block; height: 17px; width: auto; }
+  .topbar-left .titles { min-width: 0; }
+  .topbar-left h1 { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  .topbar-left .titles .ver { font-size: 11px; color: var(--muted); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .who { font-size: 13px; color: var(--muted); }
+  .who b { color: var(--ink); font-weight: 600; }
+
+  .shell { flex: 1; display: flex; min-height: 0; }
+  .sidebar {
+    width: 220px; flex: none;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+    padding: 16px 10px;
+    overflow-y: auto;
+  }
+  .nav-group + .nav-group { margin-top: 18px; }
+  .nav-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 0 10px; margin-bottom: 6px; }
+  .nav-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; text-align: left;
+    padding: 8px 10px; border-radius: 6px;
+    border: none; background: transparent; color: var(--ink);
+    font-size: 13.5px; cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-2); }
+  .nav-item.active { background: var(--accent-tint); color: var(--accent-strong); font-weight: 600; }
+  .nav-item .count { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .nav-item.active .count { color: var(--accent-strong); }
+
+  main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 20px 28px 20px; }
+  .view { display: none; max-width: 1180px; margin: 0 auto; }
+  .view.active { display: block; }
+  #view-cost { max-width: none; }
+  #view-cost.active { display: flex; flex-direction: column; height: 100%; }
+  #view-cost .table-wrap { flex: 1; min-height: 0; max-height: none; }
+  .view-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .view-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .view-head .desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .view-actions { display: flex; gap: 8px; }
+
+  /* KPI cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .kpi-card .label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .kpi-card .value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .kpi-card .value .unit { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+  .kpi-card.info .value { color: var(--info); }
+  .kpi-card.warn .value { color: var(--warn); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+  .panel h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+
+  /* category bar chart */
+  .bar-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+  .bar-row .bar-label { width: 168px; flex: none; font-size: 12.5px; color: var(--ink); }
+  .bar-track { flex: 1; height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .bar-row .bar-value { width: 30px; flex: none; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+  .activity-item { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .activity-item:first-child { border-top: none; }
+  .activity-item .a-date { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); width: 76px; flex: none; }
+  .activity-item .a-cat { color: var(--muted); }
+
+  /* Category item cards */
+  .item-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; cursor: pointer; }
+  .item-head:hover { background: var(--surface-2); }
+  .item-head .item-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .item-head .item-name { font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+  .item-head .item-detail { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-head .item-right { display: flex; align-items: center; gap: 10px; flex: none; }
+  .item-head .item-count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .chevron { transition: transform 0.15s ease; color: var(--muted); }
+  .item-card.open .chevron { transform: rotate(90deg); }
+  .item-body { display: none; border-top: 1px solid var(--line); padding: 4px 16px 14px; }
+  .item-card.open .item-body { display: block; }
+
+  /* status pill */
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.st-대기 { background: var(--surface-2); color: var(--muted); }
+  .pill.st-진행중 { background: var(--info-tint); color: var(--info); }
+  .pill.st-완료 { background: var(--good-tint); color: var(--good); }
+  .pill.st-보류 { background: var(--warn-tint); color: var(--warn); }
+  .pill.st-종료 { background: var(--bad-tint); color: var(--bad); }
+
+  /* filters */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .filter-field { display: flex; flex-direction: column; gap: 5px; }
+  .filter-field label { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .filter-field input, .filter-field select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); min-width: 120px; }
+  .filter-field.grow input { min-width: 200px; }
+
+  /* table */
+  .table-wrap { overflow-x: auto; overflow-y: auto; max-height: 65vh; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  table.records th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.records thead th { position: sticky; top: 0; z-index: 5; background: var(--surface); box-shadow: 0 1px 0 var(--line); }
+  table.records thead th.sticky-actions { z-index: 6; }
+  table.records td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: top; }
+  table.records tr:last-child td { border-bottom: none; }
+  table.records tr:hover td { background: var(--surface-2); }
+  .cell-title { font-weight: 600; }
+  .cell-memo { color: var(--muted); font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-actions { display: flex; gap: 6px; }
+  .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+
+  /* cost view */
+  #view-cost .view-head { margin-bottom: 12px; }
+  #view-cost .kpi-row { margin-bottom: 12px; }
+  #view-cost .kpi-card { padding: 10px 16px; }
+  #view-cost .kpi-card .value { font-size: 22px; margin-top: 2px; }
+  .cost-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex: none; }
+  .cost-toolbar label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .cost-toolbar select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-weight: 600; }
+  table.cost th, table.cost td { white-space: nowrap; }
+  table.cost th.month-col, table.cost td.month-col { text-align: right; padding-left: 10px; padding-right: 10px; min-width: 80px; }
+  table.cost td.cost-name { white-space: normal; min-width: 160px; }
+  table.cost tfoot td { font-weight: 700; border-top: 2px solid var(--line); border-bottom: none; background: var(--surface-2); }
+  th.sticky-actions, td.sticky-actions { position: sticky; right: 0; background: var(--surface); box-shadow: -6px 0 8px -6px rgba(0,0,0,0.25); }
+  tr:hover td.sticky-actions { background: var(--surface-2); }
+  table.cost tfoot td.sticky-actions { background: var(--surface-2); }
+  th.sticky-left, td.sticky-left { position: sticky; background: var(--surface); }
+  th.sticky-left-1, td.sticky-left-1 { left: 0; }
+  th.sticky-left-3, td.sticky-left-3 { box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+  tr:hover td.sticky-left { background: var(--surface-2); }
+  table.cost tfoot td.sticky-left { background: var(--surface-2); }
+  thead th.sticky-left { z-index: 7; }
+  .cat-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+  .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .month-grid .field label { font-size: 11px; }
+  .month-grid .field input { padding: 6px 8px; }
+
+  /* modal */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,21,29,0.45); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+  .modal-backdrop.active { display: flex; }
+  .modal { width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 22px 24px; }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .modal .modal-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(0); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-size: 13px; box-shadow: var(--shadow); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+  .file-input { display: none; }
+
+  @media (max-width: 860px) {
+    .shell { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--line); display: flex; overflow-x: auto; padding: 10px; gap: 4px; }
+    .nav-group { display: contents; }
+    .nav-label { display: none; }
+    .nav-item { flex: none; white-space: nowrap; }
+    main { padding: 18px 16px 48px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><img src="data:image/png;base64,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" alt="TOPEC" /></div>
+    <h1>총무지원팀 비용 관리</h1>
+    <div class="sub">아이디와 비밀번호를 입력해 접속하세요.</div>
+    <div class="login-error" id="login-error">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-id">아이디</label>
+        <input id="login-id" type="text" autocomplete="username" placeholder="아이디" required />
+      </div>
+      <div class="field">
+        <label for="login-pw">비밀번호</label>
+        <input id="login-pw" type="password" autocomplete="current-password" placeholder="비밀번호" required />
+      </div>
+      <button type="submit" class="btn btn-primary">로그인</button>
+    </form>
+    <div class="login-hint">계정 정보는 총무팀장에게 문의하세요.</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand-logo"><img src="data:image/png;base64,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" alt="TOPEC" /></div>
+      <div class="titles">
+        <h1>총무지원팀 비용 관리</h1>
+        <div class="ver">업무분장표 기준 · ver.202411</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="who">접속 계정 <b id="who-name">-</b></span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <main>
+      <section class="view" id="view-cost" data-view="cost">
+        <div class="view-head">
+          <div>
+            <h2>비용 관리</h2>
+            <div class="desc">연도별 고정비·지출 항목을 관리합니다. 매달 반복되는 항목은 월별 금액을 각각 입력하세요.</div>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-import-excel" style="display:none;">엑셀에서 가져오기</button>
+            <button class="btn btn-ghost btn-sm" id="btn-export-cost-csv">CSV 내보내기</button>
+            <button class="btn btn-primary btn-sm" id="btn-add-cost">+ 항목 추가</button>
+          </div>
+        </div>
+        <input type="file" class="file-input" id="excel-import-input" accept=".xlsx" />
+        <div class="cost-toolbar">
+          <label for="cost-year-select">연도</label>
+          <select id="cost-year-select"></select>
+          <label for="cost-status-select">상태</label>
+          <select id="cost-status-select">
+            <option value="">전체</option>
+            <option value="진행중">진행중인 거래처</option>
+            <option value="종료">종료된 거래처</option>
+          </select>
+        </div>
+        <div class="kpi-row" id="cost-kpi-row"></div>
+        <div class="table-wrap" id="cost-table-wrap">
+          <table class="records cost" id="cost-table"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="modal-backdrop" id="cost-modal-backdrop">
+  <div class="modal">
+    <h3 id="cost-modal-title">비용 항목 추가</h3>
+    <div class="modal-sub" id="cost-modal-sub"></div>
+    <form id="cost-form">
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-cost-vendor">거래처</label>
+          <input id="f-cost-vendor" type="text" placeholder="예: 웅진코웨이 (없으면 비워두세요)" />
+        </div>
+        <div class="field">
+          <label for="f-cost-name">항목명</label>
+          <input id="f-cost-name" type="text" placeholder="예: 화재보험(체육시설포함)" required />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-cost-category">구분</label>
+          <select id="f-cost-category"></select>
+        </div>
+        <div class="field">
+          <label for="f-cost-status">거래처 상태</label>
+          <select id="f-cost-status">
+            <option value="진행중">진행중</option>
+            <option value="종료">종료</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-cost-due">납부일(기간)</label>
+        <input id="f-cost-due" type="text" placeholder="예: 매년 3월 07일 이전" />
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="f-cost-recurring" /> 매달 반복되는 항목입니다 (예: 리스료, 구독료)</label>
+      </div>
+      <div class="field">
+        <label>월별 금액 (원)</label>
+        <div class="month-grid" id="cost-month-grid"></div>
+      </div>
+      <div class="field">
+        <label for="f-cost-note">비고</label>
+        <textarea id="f-cost-note" rows="2" placeholder="예: 전년도 금액기준"></textarea>
+      </div>
+      <input type="hidden" id="f-cost-id" />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cost-modal-cancel">취소</button>
+        <button type="button" class="btn btn-danger" id="cost-modal-delete" style="display:none;">삭제</button>
+        <button type="submit" class="btn btn-primary">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  "use strict";
+
+  var TEAM_ID = "topec";
+  var TEAM_PASSWORD = "topec123#";
+  var SESSION_KEY = "chongmu.session";
+  var RECORDS_KEY = "chongmu.records.v1";
+  var COST_KEY = "chongmu.costitems.v1";
+  var COST_SEEDED_KEY = "chongmu.costitems.seeded.v1";
+  var VENDOR_SEEDED_KEY = "chongmu.costitems.vendorseeded.v1";
+  var ASSET_REFS_SEEDED_KEY = "chongmu.records.assetrefsseeded.v1";
+  var memoryStore = {};
+  var store = (function () {
+    try {
+      var testKey = "__chongmu_test__";
+      localStorage.setItem(testKey, "1");
+      localStorage.removeItem(testKey);
+      return localStorage;
+    } catch (e) {
+      return {
+        getItem: function (k) { return Object.prototype.hasOwnProperty.call(memoryStore, k) ? memoryStore[k] : null; },
+        setItem: function (k, v) { memoryStore[k] = v; },
+        removeItem: function (k) { delete memoryStore[k]; }
+      };
+    }
+  })();
+
+  var COST_CATEGORIES = ["세금", "보험계약", "자격·면허", "필수점검", "고정지출", "기부", "기타"];
+  var COST_STATUS_LIST = ["진행중", "종료"];
+  var MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+  function emptyMonths() {
+    var m = {};
+    for (var i = 1; i <= 12; i++) m[i] = 0;
+    return m;
+  }
+  function oneTimeCost(month, amount) {
+    var m = emptyMonths();
+    m[month] = amount;
+    return m;
+  }
+  function seedCostItems2026() {
+    var rows = [
+      ["등록면허세(엔지니어링 사업자 外 6건)", "자격·면허", "매년 1월 말", "전년도 금액기준", 1, 297000],
+      ["소방작동점검", "필수점검", "매년 1월 중", "전년도 금액기준", 1, 750000],
+      ["소방안전관리자 연회비", "자격·면허", "매년 1월 중", "전년도 금액기준", 1, 48000],
+      ["기계식주차장 & 승강기사고 배상", "보험계약", "매년 2월 12일 이전", "전년도 금액기준", 2, 164400],
+      ["화재보험(체육시설포함)", "보험계약", "매년 3월 07일 이전", "전년도 금액기준", 3, 2456500],
+      ["반트(휘트니스)연회비", "고정지출", "매년 5월 중", "전년도 금액기준(락카비 포함)", 5, 12663000],
+      ["재산세(토펙삼성빌딩)_건축", "세금", "매년 7월 중", "전년도 금액기준", 7, 11265440],
+      ["재산세(비체,오크,소노)_건축", "세금", "매년 7월 중", "전년도 금액기준", 7, 202750],
+      ["소방종합점검", "필수점검", "매년 7월 중", "전년도 금액기준", 7, 900000],
+      ["교통유발 부담금", "세금", "부과기간: 전년 8.1~당해 7.31 / 납부: 당해 10.16~10.31", "", 8, 0],
+      ["재산세(토펙삼성빌딩)_토지", "세금", "매년 9월 중", "전년도 금액기준", 9, 89340870],
+      ["재산세(비체,오크,소노)_토지", "세금", "매년 9월 중", "전년도 금액기준", 9, 18900],
+      ["주차장 영업배상보험", "보험계약", "매년 12월 19일 이전", "전년도 금액기준", 12, 1000000],
+      ["희망온돌 따듯한 겨울나기", "기부", "매년 12월 말", "전년도 금액기준", 12, 1000000]
+    ];
+    return rows.map(function (r) {
+      return {
+        id: uid(), year: 2026, vendor: "", name: r[0], category: r[1], recurring: false, status: "진행중",
+        assignee: "총무지원팀", due: r[2], note: r[3], months: oneTimeCost(r[4], r[5])
+      };
+    });
+  }
+
+  function seedVendorItems2026() {
+    var pairs = [
+      ["에스원", "토펙엔지니어링건축사사무소"],
+      ["에스원", "신사옥_토펙삼성빌딩"],
+      ["에스원", "신사옥_EV제어_보증금 100000"],
+      ["에스원", "신사옥_2층 사무실"],
+      ["에스원", "AED 제세동기 렌탈"],
+      ["구룡주차장", "사무실 임대료"],
+      ["구룡주차장", "사무실관리비"],
+      ["22-전남지역 CM", "22-육-00부대현장 임대료(A019 공주, 보증금 10,000,000, 정상화단장 신경재, 선불)"],
+      ["22-전남지역 CM", "사무실 임대료_22.06.08(선불, 보증금 제이에스메가)"],
+      ["22-전남지역 CM", "사무실 관리비"],
+      ["캡스", "보안(1일)"],
+      ["SK텔레콤", "휴대폰(전세기 회장님) 010-3552-0747"],
+      ["SK텔레콤", "휴대폰(전세기회장님) 010-3139-0282"],
+      ["엘지텔레콤", "휴대폰(이은우, 법인명의) 010-5326-0623"],
+      ["엘지텔레콤", "휴대폰(전세기) 010-5792-0282"],
+      ["엘지텔레콤", "휴대폰(전세기) 010-2339-0747"],
+      ["엘지텔레콤", "휴대폰(박덕명, 법인폰) 010-5699-9336"],
+      ["KT", "휴대폰(전홍철, 개인명의) 010-3496-0282"],
+      ["KT", "동탄호수공원주차타워_22.04.19"],
+      ["KT", "대구감삼동_21.11.22"],
+      ["KT", "이문동 주차장시설_20241220"],
+      ["KT", "도화2,3동 주민센터_20241218"],
+      ["KT", "평택고덕지구_23.03.29"],
+      ["KT", "여주별장(총무지원팀)"],
+      ["KT", "삼선5구역주택재개발_221124"],
+      ["KT", "특수사업본부 팩스_21.11.08"],
+      ["KT", "천안청당동롯데_22.10.06"],
+      ["KT", "한양대 제 6,7 생활관_21.09.06"],
+      ["KT", "송도캠퍼스_22.12.26"],
+      ["KT", "해외팩스"],
+      ["KT", "이문3구역_21.12.29"],
+      ["KT", "02-575-5119(본사)"],
+      ["KT", "양양펜타와이투_22.12.27"],
+      ["KT", "우암1구역_23.01.25"],
+      ["KT", "청주오창상복합_23.03.06"],
+      ["KT", "아산FMM_23.05.02"],
+      ["KT", "경산201 신속대응단(A018)"],
+      ["KT", "연희공원_23.08.02"],
+      ["KT", "연희공원_23.11.14_SK 회선"],
+      ["KT", "포항상생공원_23.08.08"],
+      ["KT", "춘천 조양동_231106"],
+      ["KT", "보령동대동_231106_1층 사무실 통합고지"],
+      ["KT", "경호초등학교+수원세류_23.10.24"],
+      ["KT", "상도스타리움_23.12.05"],
+      ["KT", "서산 탄약조립장_2312.07(인터넷SK만 입입가능)"],
+      ["KT", "동인동1가_2024.01.12"],
+      ["KT", "A196 춘천 방룡단장_20240201"],
+      ["KT", "대림3동 청사_240131"],
+      ["KT", "고기동 노인복지_20240202"],
+      ["KT", "광주중앙근린공원(롯데)_20240206"],
+      ["KT", "A204(화천지역)_20240207"],
+      ["KT", "A204(화천지역)_20240416"],
+      ["KT", "D098_20240318(김태경단장)"],
+      ["KT", "화성 원천로연결_24.06.21(이종근단장)"],
+      ["KT", "한양대 의생명연구센터_2024.05.07"],
+      ["KT", "방배삼익아파트_20240516"],
+      ["KT", "수원세류 LH_20240625"],
+      ["KT", "진주혁신 복합도서관_20240813"],
+      ["KT", "수포 김포 간부숙소 2개지역_20240913"],
+      ["KT", "김포 간부숙소 수도연단_20241022"],
+      ["KT", "용인 은화삼지구_20241007"],
+      ["KT", "납읍초현장_24.10.16"],
+      ["KT", "잠실 진주아파트_24.10.11"],
+      ["KT", "북변4구역_241213"],
+      ["KT", "속초시 영랑근린공원_20250219"],
+      ["KT", "원주 A454_25.03.10"],
+      ["KT", "사직 3구역_250512"],
+      ["KT", "구룡공영주차장 신축공사_20250623"],
+      ["KT", "시흥하중 A-2BL 아파트 건설 공사_20250715"],
+      ["KT", "검단현장_20250822"],
+      ["KT", "포천 BTL 건설사업관리용역(B575)_20250826"],
+      ["KT", "아산병원 P동"],
+      ["KT", "과천 주암장군마을_20251111"],
+      ["KT", "명일1동 주민센터 복합화사업_20251210"],
+      ["KT", "광주 학동_20251226"],
+      ["KT", "익산 팔봉동 세움펠리피아 아파트_20251230"],
+      ["KT", "용현 학익_20260107"],
+      ["KT", "서초신동아아파트 현장_20260303"],
+      ["KT", "대명비발디관로공사_20260324"],
+      ["KT", "25-A-00부대(A389)_20260403"],
+      ["KT", "아산 온천_20260415"],
+      ["KT", "충남교육청_20260601"],
+      ["KT", "인천영종 A16블럭_20260720"],
+      ["KT", "부곡가구역_20260727"],
+      ["KT", "시립반다비 현장_20260805"],
+      ["KT", "애월국제문화복합단지_2305.15"],
+      ["KT(건축사)", "고성그랜드켄싱턴_23.05.24"],
+      ["KT(건축사)", "수원권선지구 복합시설_230710"],
+      ["KT(건축사)", "광명기아차_230707"],
+      ["KT(건축사)", "23-B622비밀설계_05.04(토펙지하)"],
+      ["KT(건축사)", "23-B622비밀설계_20231122(토펙지하)"],
+      ["KT(건축사)", "설계사무실"],
+      ["KT(건축사)", "b622 토펙삼성빌딩 B2_250821"],
+      ["기타통신", "설계디자인"],
+      ["기타통신", "설계디자인팀"],
+      ["기타통신", "대전한진택배증축_19.10.30"],
+      ["SK브로드밴드", "연천대림아파트 M2M_22.10.26 해지처리(박명숙팀장)"],
+      ["SK브로드밴드", "D067 서산탄약고24.01.09~1년 약정"],
+      ["SK브로드밴드", "한양대 구자겸 기계관_231109"],
+      ["SK브로드밴드", "중랑창업지원센터_20260722(이명원 과장)"],
+      ["SK브로드밴드", "토펙엔지어링(박명숙팀장)"],
+      ["LGU+", "070+서울지사(토펙빌딩)+포항 인터넷"],
+      ["LGU+", "포항인터넷(유선1개)"],
+      ["LGU+", "인천가정 LG_202512"],
+      ["LGU+", "천안업성 LG_202512"],
+      ["LGU+", "부산 우암 현장 LG_20260418(무약정)"],
+      ["LGU+", "부산 우암 현장 LG_20260414~20임시라우터"],
+      ["LGU+", "부안수전해_240828"],
+      ["삼삼이앤씨", "토펙삼성빌딩(전기안전관리대행)"],
+      ["케이안전관리", "전기안전관리대행료"],
+      ["한국전력공사", "수원세류 도시재생_45KW 전기요금(4층, 냉난방기용)"],
+      ["한국전력공사", "전기요금(본사)_54kw"],
+      ["한국전력공사", "전기요금(1층)_28kw"],
+      ["한국전력공사", "토펙삼성빌딩(전기요금)_500kw(신사옥)"],
+      ["예성라온팰리스", "관리비(과세) 오류동오피스텔"],
+      ["예성라온팰리스", "관리비(미과세) 오류동오피스텔"],
+      ["문화일보", "신문구독(전세기회장님)"],
+      ["조선일보", "신문구독(강대선부사장)"],
+      ["매일경제", "신문구독(임원실)"],
+      ["건설경제", "신문구독(임원실_3개월납)"],
+      ["건설경제", "신문구독(기획실,표완규부사장)"],
+      ["자유일보", "신문구독(도곡,청담,여주 총3부, 전세기회장님)"],
+      ["중앙일보", "신문구독(임재홍사장, 곽분상 담당)"],
+      ["신도리코", "토펙종합건축사사무소_제주(복사기)"],
+      ["신도리코", "부산감만택배터미널_지분정산(복사기)"],
+      ["오에이사무기기", "고성그랜드켄싱턴_23.05.24"],
+      ["오에이사무기기", "화성기아자동차_23.06.21"],
+      ["오에이사무기기", "설계비합소3(B622)_토펙빌딩_2310.31"],
+      ["오에이사무기기", "남서울교회증축_20240208"],
+      ["오에이사무기기", "화성현대자동차 안양연구소_20241105"],
+      ["오에이사무기기", "안성베터리셀연구단지_2025.02.10"],
+      ["오에이사무기기", "신사옥 4층(좌)"],
+      ["오에이사무기기", "신사옥 4층(우)"],
+      ["오에이사무기기", "B622 토펙빌딩 지하"],
+      ["오에이사무기기", "울산현대자동차_23.10.06"],
+      ["오에이사무기기", "울산현대자동차_23.06.16"],
+      ["오에이사무기기", "광명기아자동차_23.07.10"],
+      ["오에이사무기기", "수원권선지구복합_23.07.12"],
+      ["오에이사무기기", "C205 2층 임원실"],
+      ["오에이사무기기", "C205 사업관리본부_21.09"],
+      ["오에이사무기기", "C225 영업본부 업무팀_21.09"],
+      ["오에이사무기기", "C205 전략사업본부_21.09"],
+      ["오에이사무기기", "C325 특수사업본부_21.09"],
+      ["오에이사무기기", "C325 경영지원본부_21.09"],
+      ["오에이사무기기", "C360 해외사업본부_21.09"],
+      ["오에이사무기기", "M5526 임원실_21.09"],
+      ["오에이사무기기", "C325 8층 임원실_25.04.02"],
+      ["오에이사무기기", "C205 설계사업본부(설계2소)"],
+      ["오에이사무기기", "C224 설계사업본부(설계2소)"],
+      ["오에이사무기기", "기술연구소_안전관리실 사용"],
+      ["오에이사무기기", "프로젝트추진단"],
+      ["오에이사무기기", "A204(화천지역)_20240214_251119"],
+      ["오에이사무기기", "방배삼익아파트_20.12.29"],
+      ["오에이사무기기", "삼선5구역재개발_22.11.28"],
+      ["오에이사무기기", "부산우암1구역_23.01.30"],
+      ["오에이사무기기", "청주오창주상복합_23.03.09"],
+      ["오에이사무기기", "인천 연희동_230804"],
+      ["오에이사무기기", "포항상생공원_23.08.22"],
+      ["오에이사무기기", "보령동대동아파트_23.11.10"],
+      ["오에이사무기기", "한양대구자겸_23.11.15"],
+      ["오에이사무기기", "상도스타리움주택조합_23.12.08"],
+      ["오에이사무기기", "대구동인동_20240118"],
+      ["오에이사무기기", "대림3동공공청사_20240205"],
+      ["오에이사무기기", "고기동노인복지_20240205"],
+      ["오에이사무기기", "광주롯데아파트_20240213"],
+      ["오에이사무기기", "동탄원천로연결통로_20240621"],
+      ["오에이사무기기", "수원세류도시제생_20240626"],
+      ["오에이사무기기", "용인 은하삼지구_20240731"],
+      ["오에이사무기기", "진주 lh 복합도서관_20240820"],
+      ["오에이사무기기", "고양 한양컨트리클럽_20240925"],
+      ["오에이사무기기", "제주납읍초현장_24.10.17(컨소시업)"],
+      ["오에이사무기기", "북변4구역_20241216"],
+      ["오에이사무기기", "송파시립반다비_250114"],
+      ["오에이사무기기", "오산세교지구현대테라타워_250205"],
+      ["오에이사무기기", "속초영랑근린공원_250213"],
+      ["오에이사무기기", "24-D00부대 포천 BTL_25.03.27"],
+      ["오에이사무기기", "청주사직3구역_25.05.09"],
+      ["오에이사무기기", "구룡주차장"],
+      ["오에이사무기기", "시흥하중 A-2BL"],
+      ["오에이사무기기", "인천가정2"],
+      ["오에이사무기기", "인천검단지구_25.08.25"],
+      ["오에이사무기기", "과천주암동 63-9_251118"],
+      ["오에이사무기기", "천안업성 3구역_20251205"],
+      ["오에이사무기기", "명일1동주민센터_20251215"],
+      ["오에이사무기기", "광주학동4구역 1_25.12.29"],
+      ["오에이사무기기", "광주학동4구역 2_25.12.29"],
+      ["오에이사무기기", "익산 팔봉동 세움펠리피아_26.01.05"],
+      ["오에이사무기기", "인천용현학익2-2블럭_26.01.12"],
+      ["오에이사무기기", "보령수전해수소생산기지_26.01.16"],
+      ["오에이사무기기", "신세계동대구복합환승_26.01.21"],
+      ["오에이사무기기", "영동종합관광안내정보_260209"],
+      ["오에이사무기기", "서초신동아아파트_260303"],
+      ["오에이사무기기", "용인 두산 전자BG RD센터_260312"],
+      ["오에이사무기기", "대전학하2초_260324"],
+      ["오에이사무기기", "홍천 비발디파크_260331"],
+      ["오에이사무기기", "A389(화천)_260407"],
+      ["오에이사무기기", "아산 온천동_260416"],
+      ["오에이사무기기", "A336(연천)_260511"],
+      ["오에이사무기기", "충남교육청 특수교육원_260518"],
+      ["오에이사무기기", "대전 을지대 병원_260604"],
+      ["오에이사무기기", "의왕 부곡가구역_260630"],
+      ["오에이사무기기", "중랑창업지원센터_260722"],
+      ["오에이사무기기", "인천영종 A16블럭_260727"],
+      ["오에이사무기기", "아산병원P동_251103"],
+      ["오에이사무기기", "잠실진주아파트_241014"],
+      ["오에이사무기기", "이문동3구역_22.01.04"],
+      ["오에이사무기기", "김포간부숙소(수도여단)_20240924"],
+      ["오에이사무기기", "23-F간부숙소(D098)_20240319"],
+      ["오에이사무기기", "춘천조양동_23.11.13"],
+      ["오에이사무기기", "한양대의생명융합연구센터2_25.03.26"],
+      ["오에이사무기기", "A196(춘천분산형)_20240202"],
+      ["오에이사무기기", "한양대 의생명연구센터_2024.05.13"],
+      ["오에이사무기기", "A454 원주_20250313"],
+      ["오에이사무기기", "JT친애저축은행_251111"],
+      ["오에이사무기기", "양양펜타와이투_24.04.1"],
+      ["오에이사무기기", "송도글로벌캠퍼스_22.11.09"],
+      ["오에이사무기기", "평택고덕지구_23.03.29"],
+      ["오에이사무기기", "천안청당롯데 도로_250224"],
+      ["오에이사무기기", "천안청당동롯데_22.10.12"],
+      ["오에이사무기기", "도화2,3동 주민센터_20241218"],
+      ["오에이사무기기", "부안수전해_240828"],
+      ["오에이사무기기", "이문동 지하 주차장_20241105"],
+      ["오에이사무기기", "송도6,8공구_22.02.16"],
+      ["오에이사무기기", "동탄호수공원_22.05.30"],
+      ["오에이사무기기", "종암경찰서_22.03.14"],
+      ["캐논코리아", "녹산휴폐업공장_21.06.29"],
+      ["캐논코리아", "구미폴리텍대학_21.07.02"],
+      ["캐논코리아", "대구감삼동_21.11.30"],
+      ["강남디지털OA", "23-N-노후아파트[C096](경동 60:40)"],
+      ["웅진코웨이", "3층 회의실 정수기(CHPI-620L)"],
+      ["웅진코웨이", "5층 정수기(CHPI-5801LW)"],
+      ["웅진코웨이", "6층 정수기(CHPI-5801LW)"],
+      ["웅진코웨이", "7층 정수기(CHPI-7400N)"],
+      ["웅진코웨이", "8층 정수기(CHPI-5801LW)"],
+      ["웅진코웨이", "B2 정수기(CHPI-5801LW)"],
+      ["웅진코웨이", "전회장님 공기청정기(AP-1023F)"],
+      ["웅진코웨이", "전회장님 공기청정기(AP-1023F) 2대"],
+      ["웅진코웨이", "이회장님 공기청정기(AP-1023F)"],
+      ["웅진코웨이", "8층 회의실 공기청정기(AP-15230F)"],
+      ["웅진코웨이", "4층 정수기(CHPI-5801LW)"],
+      ["생수(대박유통)", "토펙엔지니어링(229-81-19550)"],
+      ["생수(대박유통)", "토펙건축사사무소(635-87-01242)"],
+      ["NLC출력(엔엘씨)", "서울지사 제본 및 복사"],
+      ["NLC출력(엔엘씨)", "토펙건축사 제본 및 복사"],
+      ["에스피앤씨엔지니어링", "삼성동사옥 소방안전관리자(후불, 최강욱대표)"],
+      ["강남수도사업소", "토펙빌딩(도곡동) 수도요금(고객번호:029079188)"],
+      ["강남수도사업소", "토펙삼성빌딩(수도요금, 신사옥, 고객번호:029064983)"],
+      ["오피스디포", "토펙엔지니어링 사무용품(김정용팀장)"],
+      ["오피스디포", "토펙건축사사무소 사무용품"],
+      ["모든오피스", "토펙엔지니어링 도서인쇄비"],
+      ["모든오피스", "토펙건축사사무소 도서인쇄비"],
+      ["알파", "본사사무용품"],
+      ["알파", "설계사무용품"],
+      ["알파카피본부", "도서인쇄비(토펙 명함, 현수막)"],
+      ["알파카피본부", "도서인쇄비(토펙건축사)"],
+      ["바로퀵서비스", "퀵서비스요금(토펙엔지니어링/토펙건축사사무소)"],
+      ["엔젤플러스(대리운전)", "대리운전요금"],
+      ["엔젤플러스(대리운전)", "대리운전요금_토펙건축사"],
+      ["핸들포유(대리운전)", "대리운전요금"],
+      ["핸들포유(대리운전)", "대리운전요금_토펙건축사"],
+      ["올플라워", "조화 및 화환대금(강부사장님 지인, 토펙엔지니어링/토펙건축사)"],
+      ["크린월드", "현관매트(010-8971-2288)"],
+      ["보성쓰리엠", "주차타워(박종달이사)"],
+      ["현대엘리베이터", "엘리베이터 보수관리"],
+      ["비스큐", "수행기사_이태수→다윗→이원석"],
+      ["오에스개발", "토펙삼성빌딩 건물관리(02-848-0133)"],
+      ["강남환경", "재활용분리수거(한정희 010-8983-4126)"],
+      ["지니코퍼레이션", "현장가구 렌탈(심성용 010-7153-3727)"],
+      ["지니코퍼레이션", "사무집기(토펙건축사사무소)"],
+      ["cm잡매칭", "현장가구2(토펙엔지니어링/토펙건축사)"],
+      ["이벤트24(위펀)", "행사(토펙엔지니어링/토펙건축사)"],
+      ["커피24(위펀)", "커피원두"],
+      ["생일24(위펀)", "상품권5만원(토펙 ENG)"],
+      ["생일24(위펀)", "상품권5만원(토펙건축사)"]
+    ];
+    return pairs.map(function (p) {
+      return {
+        id: uid(), year: 2026, vendor: p[0], name: p[1], category: "고정지출", recurring: true, status: "진행중",
+        assignee: "총무지원팀", due: "", note: "월지출내역 캡처본 기준, 금액 미입력", months: emptyMonths()
+      };
+    });
+  }
+
+  var state = {
+    records: [],
+    costItems: [],
+    costYear: new Date().getFullYear(),
+    costStatusFilter: "",
+    activeView: "overview",
+    filters: { q: "", category: "", assignee: "", status: "", from: "", to: "" },
+    editingId: null,
+    lockedCategory: null,
+    editingCostId: null
+  };
+  function uid() { return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function todayISO() { return new Date().toISOString().slice(0, 10); }
+  function fmtDate(iso) { return iso || "-"; }
+  function fmtMoney(n) { return n === null || n === undefined || n === "" ? "-" : Number(n).toLocaleString("ko-KR"); }
+  function esc(s) { return String(s === undefined || s === null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function loadCostItems() {
+    try { return JSON.parse(store.getItem(COST_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveCostItems() { store.setItem(COST_KEY, JSON.stringify(state.costItems)); }
+  function costMonthTotal(item) {
+    var sum = 0;
+    for (var i = 1; i <= 12; i++) sum += Number(item.months[i] || 0);
+    return sum;
+  }
+
+  function toast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  /* ---------------- Login ---------------- */
+  function getSession() {
+    try { return JSON.parse(store.getItem(SESSION_KEY)); } catch (e) { return null; }
+  }
+  function setSession(id) { store.setItem(SESSION_KEY, JSON.stringify({ id: id, at: Date.now() })); }
+  function clearSession() { store.removeItem(SESSION_KEY); }
+
+  function showApp(id) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").classList.add("active");
+    document.getElementById("who-name").textContent = id;
+    init();
+  }
+
+  document.getElementById("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = document.getElementById("login-id").value.trim();
+    var pw = document.getElementById("login-pw").value;
+    var err = document.getElementById("login-error");
+    if (id !== TEAM_ID || pw !== TEAM_PASSWORD) {
+      err.style.display = "block";
+      return;
+    }
+    err.style.display = "none";
+    setSession(id);
+    showApp(id);
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    clearSession();
+    location.reload();
+  });
+  function kpiCard(label, value, unit, tone) {
+    return '<div class="kpi-card' + (tone ? " " + tone : "") + '"><div class="label">' + esc(label) + '</div>' +
+      '<div class="value num">' + value + '<span class="unit">' + unit + "</span></div></div>";
+  }
+
+  function iconEdit() { return '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11.3 2.3a1 1 0 0 1 1.4 0l1 1a1 1 0 0 1 0 1.4l-7.6 7.6-3 .7.7-3 7.5-7.7Z" stroke="currentColor" stroke-width="1.3"/></svg>'; }
+  function iconTrash() { return '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5 5 13a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1l.5-8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'; }
+  function iconUp() { return '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 12.5v-9M4 7l4-4 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+  function iconDown() { return '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 3.5v9M4 9l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+  function costItemsForYear(year) {
+    return state.costItems.filter(function (c) { return c.year === year; });
+  }
+
+  function filteredCostItems() {
+    var items = costItemsForYear(state.costYear);
+    if (state.costStatusFilter) {
+      items = items.filter(function (c) { return (c.status || "진행중") === state.costStatusFilter; });
+    }
+    return items;
+  }
+
+  function moveCostItem(id, direction) {
+    var visible = filteredCostItems();
+    var visIdx = visible.findIndex(function (c) { return c.id === id; });
+    if (visIdx < 0) return;
+    var neighborVisIdx = direction === "up" ? visIdx - 1 : visIdx + 1;
+    if (neighborVisIdx < 0 || neighborVisIdx >= visible.length) return;
+    var a = visible[visIdx], b = visible[neighborVisIdx];
+    var idxA = state.costItems.indexOf(a);
+    var idxB = state.costItems.indexOf(b);
+    state.costItems[idxA] = b;
+    state.costItems[idxB] = a;
+    saveCostItems();
+    renderCostTable();
+  }
+
+  function buildCostYearSelect() {
+    var years = state.costItems.map(function (c) { return c.year; });
+    var thisYear = new Date().getFullYear();
+    years.push(thisYear, thisYear + 1);
+    years = Array.from(new Set(years)).sort(function (a, b) { return b - a; });
+    var sel = document.getElementById("cost-year-select");
+    sel.innerHTML = years.map(function (y) { return '<option value="' + y + '">' + y + '년</option>'; }).join("");
+    sel.value = state.costYear;
+    sel.onchange = function () {
+      state.costYear = Number(sel.value);
+      renderCostKpis();
+      renderCostTable();
+    };
+    var statusSel = document.getElementById("cost-status-select");
+    statusSel.value = state.costStatusFilter;
+    statusSel.onchange = function () {
+      state.costStatusFilter = statusSel.value;
+      renderCostKpis();
+      renderCostTable();
+    };
+  }
+
+  function renderCostKpis() {
+    var items = filteredCostItems();
+    var total = items.reduce(function (sum, c) { return sum + costMonthTotal(c); }, 0);
+    var recurring = items.filter(function (c) { return c.recurring; }).length;
+    var label = state.costYear + "년" + (state.costStatusFilter ? " " + state.costStatusFilter : "") + " 총 지출";
+    document.getElementById("cost-kpi-row").innerHTML =
+      kpiCard(label, fmtMoney(total), "원") +
+      kpiCard("관리 항목 수", items.length, "건") +
+      kpiCard("매월 반복 항목", recurring, "건", "info");
+  }
+
+  function renderCostTable() {
+    var items = filteredCostItems();
+    var outer = document.getElementById("cost-table-wrap");
+    if (!items.length) {
+      outer.innerHTML = '<div class="empty-state">' + state.costYear + '년' + (state.costStatusFilter ? " " + state.costStatusFilter : "") + ' 비용 항목이 없습니다. "+ 항목 추가"로 등록해보세요.</div>';
+      return;
+    }
+    outer.innerHTML = '<table class="records cost" id="cost-table"></table>';
+    var monthTotals = [0,0,0,0,0,0,0,0,0,0,0,0];
+    var grandTotal = 0;
+    var rows = items.map(function (c) {
+      var rowTotal = costMonthTotal(c);
+      grandTotal += rowTotal;
+      var monthCells = "";
+      for (var i = 1; i <= 12; i++) {
+        var v = Number(c.months[i] || 0);
+        monthTotals[i - 1] += v;
+        monthCells += '<td class="num month-col">' + (v ? fmtMoney(v) : "-") + '</td>';
+      }
+      var status = c.status || "진행중";
+      return '<tr data-id="' + c.id + '">' +
+        '<td class="sticky-left sticky-left-1"><span class="pill st-' + status + '">' + status + '</span></td>' +
+        '<td class="sticky-left sticky-left-2">' + (c.vendor ? esc(c.vendor) : '<span class="cell-memo">-</span>') + '</td>' +
+        '<td class="sticky-left sticky-left-3 cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
+        '<td><span class="cat-chip">' + esc(c.category) + '</span></td>' +
+        monthCells +
+        '<td class="num" style="font-weight:700;">' + fmtMoney(rowTotal) + '</td>' +
+        '<td class="cell-memo" title="' + esc((c.due || "") + (c.note ? " · " + c.note : "")) + '">' + esc(c.due || "-") + '</td>' +
+        '<td class="sticky-actions"><div class="row-actions">' +
+        '<button class="icon-btn" data-cost-up="' + c.id + '" title="위로 이동" aria-label="위로 이동">' + iconUp() + '</button>' +
+        '<button class="icon-btn" data-cost-down="' + c.id + '" title="아래로 이동" aria-label="아래로 이동">' + iconDown() + '</button>' +
+        '<button class="icon-btn" data-cost-edit="' + c.id + '" title="수정" aria-label="수정">' + iconEdit() + '</button>' +
+        '<button class="icon-btn" data-cost-del="' + c.id + '" title="삭제" aria-label="삭제">' + iconTrash() + '</button>' +
+        '</div></td></tr>';
+    }).join("");
+    var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
+    var thead = '<thead><tr><th class="sticky-left sticky-left-1">상태</th><th class="sticky-left sticky-left-2">거래처</th><th class="sticky-left sticky-left-3">항목</th><th>구분</th>' +
+      MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
+      '<th>합계</th><th>납부일(비고)</th><th class="sticky-actions">관리</th></tr></thead>';
+    var tfoot = '<tfoot><tr><td class="sticky-left sticky-left-1" colspan="4">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
+    var wrap = document.getElementById("cost-table");
+    wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
+    wrap.querySelectorAll("[data-cost-up]").forEach(function (btn) {
+      btn.addEventListener("click", function () { moveCostItem(btn.getAttribute("data-cost-up"), "up"); });
+    });
+    wrap.querySelectorAll("[data-cost-down]").forEach(function (btn) {
+      btn.addEventListener("click", function () { moveCostItem(btn.getAttribute("data-cost-down"), "down"); });
+    });
+    wrap.querySelectorAll("[data-cost-edit]").forEach(function (btn) {
+      btn.addEventListener("click", function () { openCostModal(btn.getAttribute("data-cost-edit")); });
+    });
+    wrap.querySelectorAll("[data-cost-del]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-cost-del");
+        if (confirm("이 비용 항목을 삭제할까요?")) {
+          state.costItems = state.costItems.filter(function (c) { return c.id !== id; });
+          saveCostItems();
+          refreshAll();
+          toast("삭제했습니다.");
+        }
+      });
+    });
+    applyCostStickyLeftOffsets();
+  }
+
+  function applyCostStickyLeftOffsets() {
+    var table = document.getElementById("cost-table");
+    if (!table) return;
+    var headRow = table.querySelector("thead tr");
+    if (!headRow) return;
+    var col1 = headRow.querySelector(".sticky-left-1");
+    var col2 = headRow.querySelector(".sticky-left-2");
+    if (!col1 || !col2) return;
+    var offset2 = col1.getBoundingClientRect().width;
+    var offset3 = offset2 + col2.getBoundingClientRect().width;
+    table.querySelectorAll(".sticky-left-2").forEach(function (el) { el.style.left = offset2 + "px"; });
+    table.querySelectorAll(".sticky-left-3").forEach(function (el) { el.style.left = offset3 + "px"; });
+  }
+
+  function renderCostView() {
+    buildCostYearSelect();
+    renderCostKpis();
+    renderCostTable();
+  }
+
+  function fillCostCategorySelect(selected) {
+    var sel = document.getElementById("f-cost-category");
+    sel.innerHTML = COST_CATEGORIES.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join("");
+    if (selected) sel.value = selected;
+  }
+
+  function buildCostMonthGrid(months) {
+    var grid = document.getElementById("cost-month-grid");
+    grid.innerHTML = MONTH_LABELS.map(function (label, idx) {
+      var m = idx + 1;
+      var v = months && months[m] ? months[m] : "";
+      return '<div class="field"><label for="f-cost-m' + m + '">' + label + '</label>' +
+        '<input type="number" min="0" step="1" id="f-cost-m' + m + '" value="' + v + '" /></div>';
+    }).join("");
+  }
+
+  function openCostModal(id) {
+    var form = document.getElementById("cost-form");
+    form.reset();
+    document.getElementById("cost-modal-delete").style.display = "none";
+    fillCostCategorySelect();
+    if (id) {
+      var c = state.costItems.find(function (x) { return x.id === id; });
+      if (!c) return;
+      document.getElementById("cost-modal-title").textContent = "비용 항목 수정";
+      document.getElementById("cost-modal-sub").textContent = c.year + "년 · " + c.category;
+      document.getElementById("f-cost-id").value = c.id;
+      document.getElementById("f-cost-vendor").value = c.vendor || "";
+      document.getElementById("f-cost-name").value = c.name;
+      fillCostCategorySelect(c.category);
+      document.getElementById("f-cost-due").value = c.due || "";
+      document.getElementById("f-cost-note").value = c.note || "";
+      document.getElementById("f-cost-recurring").checked = !!c.recurring;
+      document.getElementById("f-cost-status").value = c.status || "진행중";
+      buildCostMonthGrid(c.months);
+      document.getElementById("cost-modal-delete").style.display = "inline-flex";
+      document.getElementById("cost-modal-delete").setAttribute("data-cost-del-id", c.id);
+    } else {
+      document.getElementById("cost-modal-title").textContent = "비용 항목 추가";
+      document.getElementById("cost-modal-sub").textContent = state.costYear + "년";
+      document.getElementById("f-cost-id").value = "";
+      document.getElementById("f-cost-status").value = "진행중";
+      buildCostMonthGrid(null);
+    }
+    document.getElementById("cost-modal-backdrop").classList.add("active");
+    document.getElementById("f-cost-name").focus();
+  }
+  function closeCostModal() { document.getElementById("cost-modal-backdrop").classList.remove("active"); }
+
+  document.getElementById("btn-add-cost").addEventListener("click", function () { openCostModal(null); });
+  document.getElementById("cost-modal-cancel").addEventListener("click", closeCostModal);
+  document.getElementById("cost-modal-backdrop").addEventListener("click", function (e) { if (e.target === this) closeCostModal(); });
+  document.getElementById("cost-modal-delete").addEventListener("click", function () {
+    var id = this.getAttribute("data-cost-del-id");
+    if (confirm("이 비용 항목을 삭제할까요?")) {
+      state.costItems = state.costItems.filter(function (c) { return c.id !== id; });
+      saveCostItems();
+      closeCostModal();
+      refreshAll();
+      toast("삭제했습니다.");
+    }
+  });
+
+  document.getElementById("cost-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = document.getElementById("f-cost-id").value;
+    var months = emptyMonths();
+    for (var i = 1; i <= 12; i++) {
+      var v = document.getElementById("f-cost-m" + i).value;
+      months[i] = v ? Number(v) : 0;
+    }
+    var data = {
+      year: state.costYear,
+      vendor: document.getElementById("f-cost-vendor").value.trim(),
+      name: document.getElementById("f-cost-name").value.trim(),
+      category: document.getElementById("f-cost-category").value,
+      assignee: "총무지원팀",
+      due: document.getElementById("f-cost-due").value.trim(),
+      note: document.getElementById("f-cost-note").value.trim(),
+      recurring: document.getElementById("f-cost-recurring").checked,
+      status: document.getElementById("f-cost-status").value,
+      months: months
+    };
+    if (id) {
+      var idx = state.costItems.findIndex(function (c) { return c.id === id; });
+      data.year = state.costItems[idx].year;
+      state.costItems[idx] = Object.assign({}, state.costItems[idx], data);
+      toast("수정했습니다.");
+    } else {
+      data.id = uid();
+      var insertAt = -1;
+      if (data.vendor) {
+        for (var vi = state.costItems.length - 1; vi >= 0; vi--) {
+          if (state.costItems[vi].vendor === data.vendor && state.costItems[vi].year === data.year) { insertAt = vi + 1; break; }
+        }
+      }
+      if (insertAt >= 0) { state.costItems.splice(insertAt, 0, data); }
+      else { state.costItems.push(data); }
+      toast("추가했습니다.");
+    }
+    saveCostItems();
+    closeCostModal();
+    refreshAll();
+  });
+
+  document.getElementById("btn-export-cost-csv").addEventListener("click", function () {
+    var items = filteredCostItems();
+    var header = ["연도", "상태", "거래처", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
+    var lines = [header.join(",")];
+    items.forEach(function (c) {
+      var monthVals = [];
+      for (var i = 1; i <= 12; i++) monthVals.push(c.months[i] || 0);
+      var row = [c.year, c.status || "진행중", c.vendor || "", c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
+        .concat(monthVals, [costMonthTotal(c), c.due || "", c.note || ""])
+        .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; });
+      lines.push(row.join(","));
+    });
+    downloadOrFallback("총무팀_비용관리_" + state.costYear + ".csv", "﻿" + lines.join("\n"), "text/csv");
+  });
+
+  if (window.XLSX) { document.getElementById("btn-import-excel").style.display = ""; }
+  document.getElementById("btn-import-excel").addEventListener("click", function () {
+    document.getElementById("excel-import-input").click();
+  });
+  document.getElementById("excel-import-input").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    e.target.value = "";
+    if (!file || !window.XLSX) return;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var result;
+      try {
+        var wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array" });
+        result = importCostAmountsFromWorkbook(wb);
+      } catch (err) {
+        toast("엑셀 파일을 읽는 중 오류가 발생했습니다.");
+        return;
+      }
+      if (result.updated > 0) { saveCostItems(); refreshAll(); }
+      toast(result.updated + "개 항목 업데이트, " + result.skipped + "건은 일치하는 항목이 없어 건너뜀");
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function findSheetHeader(rows, mustHaveTexts, maxScanRows) {
+    for (var r = 0; r < Math.min(rows.length, maxScanRows || 10); r++) {
+      var row = rows[r];
+      if (!row) continue;
+      var indices = mustHaveTexts.map(function (t) { return row.indexOf(t); });
+      if (indices.every(function (idx) { return idx !== -1; })) {
+        return { row: r, indices: indices };
+      }
+    }
+    return null;
+  }
+
+  function parseAmount(raw) {
+    if (raw === "" || raw === undefined || raw === null) return null;
+    var num = typeof raw === "number" ? raw : parseFloat(String(raw).replace(/,/g, ""));
+    return isNaN(num) ? null : num;
+  }
+
+  function importCostAmountsFromWorkbook(wb) {
+    var updated = 0, skipped = 0;
+    var yearSuffix = String(state.costYear).slice(2);
+
+    var monthlySheetName = wb.SheetNames.find(function (n) { return n.indexOf("월지출") !== -1; });
+    if (monthlySheetName) {
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[monthlySheetName], { header: 1, defval: "" });
+      var head = findSheetHeader(rows, ["거래처", "내역"]);
+      if (head) {
+        var vendorCol = head.indices[0], itemCol = head.indices[1];
+        var monthCols = {};
+        rows[head.row].forEach(function (cell, idx) {
+          if (typeof cell === "string") {
+            var m = cell.match(/^(\d{2})년(\d{1,2})월$/);
+            if (m && m[1] === yearSuffix) monthCols[parseInt(m[2], 10)] = idx;
+          }
+        });
+        var lastVendor = "";
+        for (var r = head.row + 1; r < rows.length; r++) {
+          var row = rows[r];
+          if (!row) continue;
+          if (row[vendorCol]) lastVendor = String(row[vendorCol]).trim();
+          var itemName = row[itemCol] ? String(row[itemCol]).trim() : "";
+          if (!itemName) continue;
+          var target = state.costItems.find(function (c) { return c.vendor === lastVendor && c.name === itemName && c.year === state.costYear; });
+          if (!target) { skipped++; continue; }
+          var changed = false;
+          Object.keys(monthCols).forEach(function (m) {
+            var num = parseAmount(row[monthCols[m]]);
+            if (num !== null) { target.months[m] = num; changed = true; }
+          });
+          if (changed) updated++;
+        }
+      }
+    }
+
+    var annualSheetName = wb.SheetNames.find(function (n) { return n.indexOf("고정지출") !== -1; });
+    if (annualSheetName) {
+      var rows2 = XLSX.utils.sheet_to_json(wb.Sheets[annualSheetName], { header: 1, defval: "" });
+      var head2 = findSheetHeader(rows2, ["월", "항목", "금액"], 6);
+      if (head2) {
+        var monthColIdx = head2.indices[0], itemColIdx = head2.indices[1], amountColIdx = head2.indices[2];
+        var lastMonth = null;
+        for (var r2 = head2.row + 1; r2 < rows2.length; r2++) {
+          var row2 = rows2[r2];
+          if (!row2) continue;
+          if (row2[monthColIdx]) {
+            var mm = String(row2[monthColIdx]).match(/(\d{1,2})월/);
+            if (mm) lastMonth = parseInt(mm[1], 10);
+          }
+          var itemName2 = row2[itemColIdx] ? String(row2[itemColIdx]).trim() : "";
+          if (!itemName2 || itemName2 === "-" || !lastMonth) continue;
+          var num2 = parseAmount(row2[amountColIdx]);
+          if (num2 === null) continue;
+          var target2 = state.costItems.find(function (c) { return !c.vendor && c.name === itemName2 && c.year === state.costYear; });
+          if (!target2) { skipped++; continue; }
+          target2.months[lastMonth] = num2;
+          updated++;
+        }
+      }
+    }
+
+    return { updated: updated, skipped: skipped };
+  }
+  function downloadOrFallback(filename, data, mime) {
+    if (window.claude && window.claude.downloads) {
+      window.claude.downloads.save({ filename: filename, data: data }).then(function () {
+        toast("다운로드를 저장했습니다.");
+      }).catch(function (err) {
+        if (err && err.code === "declined") return;
+        fallbackDownload(filename, data, mime);
+      });
+    } else {
+      fallbackDownload(filename, data, mime);
+    }
+  }
+  function fallbackDownload(filename, data, mime) {
+    var blob = new Blob([data], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  var AMOUNT_PATCHES = [
+    {
+      id: "2026-esone-1to7",
+      items: [
+        { vendor: "에스원", name: "신사옥_토펙삼성빌딩", months: { 1: 968000, 2: 968000, 3: 968000, 4: 968000, 5: 968000, 6: 968000, 7: 968000 } },
+        { vendor: "에스원", name: "신사옥_EV제어_보증금 100000", months: { 1: 110000, 2: 110000, 3: 110000, 4: 110000, 5: 110000, 6: 110000, 7: 110000 } },
+        { vendor: "에스원", name: "신사옥_2층 사무실", months: { 1: 110000, 2: 110000, 3: 110000, 4: 110000, 5: 110000, 6: 110000, 7: 110000 } }
+      ]
+    },
+    {
+      id: "2026-kt-1to7",
+      items: [
+        { vendor: "KT", name: "여주별장(총무지원팀)", months: { 1: 22000, 2: 22000, 3: 22000, 4: 22000, 5: 22000, 6: 22000, 7: 22000 } },
+        { vendor: "KT", name: "삼선5구역주택재개발_221124", months: { 1: 46750, 2: 47270, 3: 46750, 4: 46750, 5: 46750, 6: 47050, 7: 46750 } },
+        { vendor: "KT", name: "특수사업본부 팩스_21.11.08", months: { 1: 8640, 2: 8470, 3: 8600, 4: 8510, 5: 8600, 6: 8470, 7: 8470 } },
+        { vendor: "KT", name: "한양대 제 6,7 생활관_21.09.06", months: { 2: 60050 } },
+        { vendor: "KT", name: "송도캠퍼스_22.12.26", months: { 1: 47510, 2: 9040 } },
+        { vendor: "KT", name: "해외팩스", months: { 1: 5720, 2: 5720, 3: 5720, 4: 5990, 5: 5720, 6: 5720, 7: 5720 } },
+        { vendor: "KT", name: "이문3구역_21.12.29", months: { 1: 36850, 2: 36850, 3: 36850, 4: 37020, 5: 36850, 6: 36850, 7: 9820 } },
+        { vendor: "KT", name: "02-575-5119(본사)", months: { 1: 398960, 2: 414300, 3: 464690, 4: 398770, 5: 398740, 6: 399170, 7: 398870 } },
+        { vendor: "KT", name: "양양펜타와이투_22.12.27", months: { 1: 36850, 2: 34730, 3: 5890 } },
+        { vendor: "KT", name: "우암1구역_23.01.25", months: { 1: 36850, 2: 36850, 3: 36850, 4: 36850, 5: 23330 } },
+        { vendor: "KT", name: "청주오창상복합_23.03.06", months: { 1: 35750, 2: 35750, 3: 35750, 4: 35750, 5: 35750, 6: 35750, 7: 35750 } },
+        { vendor: "KT", name: "연희공원_23.08.02", months: { 1: 33000, 2: 33000, 3: 33000, 4: 33000, 5: 33000, 6: 33000, 7: 33000 } },
+        { vendor: "KT", name: "포항상생공원_23.08.08", months: { 1: 6050, 2: 6050, 3: 6050, 4: 6050, 5: 6050, 6: 6050, 7: 6050 } },
+        { vendor: "KT", name: "춘천 조양동_231106", months: { 1: 55880, 2: 55880, 3: 55880, 4: 55880, 5: 12830 } },
+        { vendor: "KT", name: "보령동대동_231106_1층 사무실 통합고지", months: { 1: 42350, 2: 42350, 3: 42350, 4: 42350, 5: 42350, 6: 42350, 7: 42350 } },
+        { vendor: "KT", name: "상도스타리움_23.12.05", months: { 1: 36850, 2: 36850, 3: 36850, 4: 36850, 5: 36850, 6: 36850, 7: 36850 } },
+        { vendor: "KT", name: "동인동1가_2024.01.12", months: { 1: 35750, 2: 35750, 3: 35750, 4: 35750, 5: 35750, 6: 35750, 7: 35750 } },
+        { vendor: "KT", name: "A196 춘천 방룡단장_20240201", months: { 1: 54340, 2: 54340, 3: 54340, 4: 40310 } },
+        { vendor: "KT", name: "대림3동 청사_240131", months: { 1: 47430, 2: 47430, 3: 47430, 4: 47430, 5: 47480, 6: 47480, 7: 47430 } },
+        { vendor: "KT", name: "고기동 노인복지_20240202", months: { 1: 33000, 2: 33000, 3: 33000, 4: 33000, 5: 33000, 6: 33000, 7: 48000 } },
+        { vendor: "KT", name: "광주중앙근린공원(롯데)_20240206", months: { 1: 41010, 2: 40350, 3: 41690, 4: 40250, 5: 38840, 6: 39890, 7: 41330 } },
+        { vendor: "KT", name: "D098_20240318(김태경단장)", months: { 1: 47430, 2: 47430, 3: 47430, 4: 47430, 5: 38800, 6: 10450, 7: 10450 } },
+        { vendor: "KT", name: "화성 원천로연결_24.06.21(이종근단장)", months: { 1: 38500, 2: 38500, 3: 38500, 4: 38500, 5: 38500, 6: 38500, 7: 38500 } },
+        { vendor: "KT", name: "수원세류 LH_20240625", months: { 1: 63380, 2: 63380, 3: 63770, 4: 63950, 5: 63380, 6: 63380, 7: 63380 } },
+        { vendor: "KT", name: "진주혁신 복합도서관_20240813", months: { 1: 50050, 2: 50050, 3: 50050, 4: 50050, 5: 48090, 6: 118210, 7: 50050 } },
+        { vendor: "KT", name: "수포 김포 간부숙소 2개지역_20240913", months: { 1: 56490, 2: 56320, 3: 56320, 4: 56320, 5: 56320, 6: 25430 } },
+        { vendor: "KT", name: "용인 은화삼지구_20241007", months: { 1: 42800, 2: 41800, 3: 42230, 4: 41800, 5: 41800, 6: 41980, 7: 41800 } },
+        { vendor: "KT", name: "납읍초현장_24.10.16", months: { 1: 50050, 2: 50050, 3: 50050, 4: 50050, 5: 50050, 6: 50050, 7: 50050 } },
+        { vendor: "KT", name: "잠실 진주아파트_24.10.11", months: { 1: 45100, 2: 45100, 3: 45100, 4: 45100, 5: 45100, 6: 45100, 7: 43590 } },
+        { vendor: "KT", name: "북변4구역_241213", months: { 1: 41800, 2: 41800, 3: 41800, 4: 41800, 5: 41800, 6: 41800, 7: 41800 } },
+        { vendor: "KT", name: "속초시 영랑근린공원_20250219", months: { 1: 44000, 2: 44000, 3: 44000, 4: 44000, 5: 44000, 6: 44000, 7: 44000 } },
+        { vendor: "KT", name: "원주 A454_25.03.10", months: { 1: 43010, 2: 43140, 3: 49750 } },
+        { vendor: "KT", name: "사직 3구역_250512", months: { 1: 31900, 2: 31900, 3: 31900, 4: 31900, 5: 31900, 6: 31900, 7: 63640 } },
+        { vendor: "KT", name: "구룡공영주차장 신축공사_20250623", months: { 1: 39600, 2: 39600, 3: 39600, 4: 39600, 5: 39600, 6: 39600, 7: 39600 } },
+        { vendor: "KT", name: "시흥하중 A-2BL 아파트 건설 공사_20250715", months: { 1: 39600, 2: 39600, 3: 39600, 4: 39600, 5: 40030, 6: 46200, 7: 46200 } },
+        { vendor: "KT", name: "검단현장_20250822", months: { 1: 39600, 2: 39600, 3: 39600, 4: 39600, 5: 39600, 6: 39600, 7: 39600 } },
+        { vendor: "KT", name: "포천 BTL 건설사업관리용역(B575)_20250826", months: { 1: 39600, 2: 39600, 3: 39600, 4: 39600, 5: 40180, 6: 48400, 7: 85550 } },
+        { vendor: "KT", name: "아산병원 P동", months: { 1: 29700, 2: 29700, 3: 29700, 4: 29700, 5: 29700, 6: 29700, 7: 16500 } },
+        { vendor: "KT", name: "과천 주암장군마을_20251111", months: { 1: 39600, 2: 39600, 3: 39600, 4: 39600, 5: 39600, 6: 39600, 7: 39600 } },
+        { vendor: "KT", name: "명일1동 주민센터 복합화사업_20251210", months: { 1: 60050, 2: 30800, 3: 30800, 4: 30800, 5: 30800, 6: 30800, 7: 30800 } },
+        { vendor: "KT", name: "광주 학동_20251226", months: { 1: 74810, 2: 35200, 3: 35200, 4: 105210, 5: 35210, 6: 35260, 7: 35280 } },
+        { vendor: "KT", name: "익산 팔봉동 세움펠리피아 아파트_20251230", months: { 1: 74270, 2: 103270, 3: 35200, 4: 35200, 5: 35200, 6: 35200, 7: 36090 } },
+        { vendor: "KT", name: "용현 학익_20260107", months: { 2: 57290, 3: 33000, 4: 33000, 5: 33000, 6: 33000, 7: 33000 } },
+        { vendor: "KT", name: "서초신동아아파트 현장_20260303", months: { 4: 108930, 5: 45320, 6: 45320, 7: 45320 } },
+        { vendor: "KT", name: "대명비발디관로공사_20260324", months: { 4: 38550, 5: 39600, 6: 39600, 7: 39600 } },
+        { vendor: "KT", name: "25-A-00부대(A389)_20260403", months: { 5: 113210, 6: 48400, 7: 48400 } },
+        { vendor: "KT", name: "아산 온천_20260415", months: { 5: 90770, 6: 35200, 7: 35200 } },
+        { vendor: "KT", name: "충남교육청_20260601", months: { 7: 121500 } }
+      ]
+    },
+    {
+      id: "2026-oa-1to7",
+      items: [
+        { vendor: "오에이사무기기", name: "고성그랜드켄싱턴_23.05.24", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "화성기아자동차_23.06.21", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "설계비합소3(B622)_토펙빌딩_2310.31", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "남서울교회증축_20240208", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "화성현대자동차 안양연구소_20241105", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "안성베터리셀연구단지_2025.02.10", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "신사옥 4층(좌)", months: { 1: 366960, 2: 710490, 3: 304590, 4: 325270, 5: 193490, 6: 249920, 7: 358800 } },
+        { vendor: "오에이사무기기", name: "신사옥 4층(우)", months: { 1: 1124090, 2: 2008710, 3: 1061170, 4: 1090100, 5: 786720, 6: 758890, 7: 959640 } },
+        { vendor: "오에이사무기기", name: "울산현대자동차_23.06.16", months: { 1: 126500 } },
+        { vendor: "오에이사무기기", name: "C205 2층 임원실", months: { 1: 69116 } },
+        { vendor: "오에이사무기기", name: "C205 사업관리본부_21.09", months: { 1: 469590, 2: 820600, 3: 159500, 4: 281820, 5: 2255550, 6: 681230, 7: 765710 } },
+        { vendor: "오에이사무기기", name: "C225 영업본부 업무팀_21.09", months: { 1: 159500, 2: 159500, 3: 159500, 4: 261910, 5: 159500, 6: 336160, 7: 357060 } },
+        { vendor: "오에이사무기기", name: "C205 전략사업본부_21.09", months: { 1: 159500, 2: 159500, 3: 159500, 4: 159500, 5: 159500, 6: 159500, 7: 159500 } },
+        { vendor: "오에이사무기기", name: "C325 특수사업본부_21.09", months: { 1: 297220, 2: 175450, 3: 206030, 4: 260150, 5: 240240, 6: 391490, 7: 510070 } },
+        { vendor: "오에이사무기기", name: "C325 경영지원본부_21.09", months: { 1: 159500, 2: 244530, 3: 159500, 4: 195690, 5: 208010, 6: 242770, 7: 159500 } },
+        { vendor: "오에이사무기기", name: "C360 해외사업본부_21.09", months: { 1: 159500, 2: 159500, 3: 174790, 4: 159500, 5: 159500, 6: 210430, 7: 266200 } },
+        { vendor: "오에이사무기기", name: "M5526 임원실_21.09", months: { 1: 77000, 2: 77000, 3: 77000, 4: 77000, 5: 77000, 6: 77000, 7: 77000 } },
+        { vendor: "오에이사무기기", name: "C325 8층 임원실_25.04.02", months: { 1: 74433 } },
+        { vendor: "오에이사무기기", name: "방배삼익아파트_20.12.29", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "삼선5구역재개발_22.11.28", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "부산우암1구역_23.01.30", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "청주오창주상복합_23.03.09", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "인천 연희동_230804", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "포항상생공원_23.08.22", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "보령동대동아파트_23.11.10", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "한양대구자겸_23.11.15", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 156016 } },
+        { vendor: "오에이사무기기", name: "상도스타리움주택조합_23.12.08", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "대구동인동_20240118", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "대림3동공공청사_20240205", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 156016 } },
+        { vendor: "오에이사무기기", name: "고기동노인복지_20240205", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "광주롯데아파트_20240213", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "동탄원천로연결통로_20240621", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "수원세류도시제생_20240626", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "용인 은하삼지구_20240731", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "진주 lh 복합도서관_20240820", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 181500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "고양 한양컨트리클럽_20240925", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "제주납읍초현장_24.10.17(컨소시업)", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "북변4구역_20241216", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "송파시립반다비_250114", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "오산세교지구현대테라타워_250205", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "속초영랑근린공원_250213", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "24-D00부대 포천 BTL_25.03.27", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "청주사직3구역_25.05.09", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "구룡주차장", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "시흥하중 A-2BL", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "인천가정2", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "인천검단지구_25.08.25", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "과천주암동 63-9_251118", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "천안업성 3구역_20251205", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "명일1동주민센터_20251215", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "광주학동4구역 1_25.12.29", months: { 1: 113850, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "광주학동4구역 2_25.12.29", months: { 1: 113850, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "익산 팔봉동 세움펠리피아_26.01.05", months: { 1: 308550, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "인천용현학익2-2블럭_26.01.12", months: { 1: 114032, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "보령수전해수소생산기지_26.01.16", months: { 1: 97166, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "신세계동대구복합환승_26.01.21", months: { 1: 241083, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "영동종합관광안내정보_260209", months: { 2: 291682, 3: 126500, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "서초신동아아파트_260303", months: { 3: 130900, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "용인 두산 전자BG RD센터_260312", months: { 3: 59034, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "대전학하2초_260324", months: { 3: 228434, 4: 126500, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "홍천 비발디파크_260331", months: { 4: 164624, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "A389(화천)_260407", months: { 4: 245116, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "아산 온천동_260416", months: { 4: 262166, 5: 126500, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "A336(연천)_260511", months: { 5: 228245, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "충남교육청 특수교육원_260518", months: { 5: 190298, 6: 126500, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "대전 을지대 병원_260604", months: { 6: 253550, 7: 126500 } },
+        { vendor: "오에이사무기기", name: "의왕 부곡가구역_260630", months: { 6: 109633 } },
+        { vendor: "오에이사무기기", name: "중랑창업지원센터_260722", months: { 7: 181866 } },
+        { vendor: "오에이사무기기", name: "아산병원P동_251103", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 80116 } },
+        { vendor: "오에이사무기기", name: "잠실진주아파트_241014", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 143366 } },
+        { vendor: "오에이사무기기", name: "이문동3구역_22.01.04", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 126500, 6: 50600 } },
+        { vendor: "오에이사무기기", name: "김포간부숙소(수도여단)_20240924", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 84326, 6: 50600 } },
+        { vendor: "오에이사무기기", name: "23-F간부숙소(D098)_20240319", months: { 1: 126500, 2: 126500, 3: 126500, 4: 126500, 5: 0 } },
+        { vendor: "오에이사무기기", name: "춘천조양동_23.11.13", months: { 1: 126500, 2: 126500, 3: 126500, 4: 54816 } },
+        { vendor: "오에이사무기기", name: "한양대의생명융합연구센터2_25.03.26", months: { 1: 126500, 2: 126500, 3: 126500, 4: 54816 } },
+        { vendor: "오에이사무기기", name: "A196(춘천분산형)_20240202", months: { 1: 126500, 2: 126500, 3: 122283 } },
+        { vendor: "오에이사무기기", name: "한양대 의생명연구센터_2024.05.13", months: { 1: 126500, 2: 126500, 3: 88550 } },
+        { vendor: "오에이사무기기", name: "A454 원주_20250313", months: { 1: 126500, 2: 126500, 3: 8434 } },
+        { vendor: "오에이사무기기", name: "JT친애저축은행_251111", months: { 1: 126500, 2: 126500, 3: 8434 } },
+        { vendor: "오에이사무기기", name: "양양펜타와이투_24.04.1", months: { 1: 126500, 2: 50600 } },
+        { vendor: "오에이사무기기", name: "송도글로벌캠퍼스_22.11.09", months: { 1: 126500, 2: 42166 } }
+      ]
+    },
+    {
+      id: "2026-fix-ambiguous-month",
+      items: [
+        { vendor: "오에이사무기기", name: "C205 2층 임원실", clearMonths: [1], months: { 7: 69116 } },
+        { vendor: "오에이사무기기", name: "C325 8층 임원실_25.04.02", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1월에 반영" },
+        { vendor: "KT", name: "한양대 제 6,7 생활관_21.09.06", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 2월에 반영" },
+        { vendor: "오에이사무기기", name: "울산현대자동차_23.06.16", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1월에 반영" },
+        { vendor: "KT", name: "송도캠퍼스_22.12.26", note: "월 확인 필요 (원본 확인 후 수정 필요) — 임시로 1,2월에 반영" }
+      ]
+    }
+  ];
+  function applyAmountPatches() {
+    var changed = false;
+    AMOUNT_PATCHES.forEach(function (patch) {
+      var flagKey = "chongmu.costitems.patch." + patch.id + ".v1";
+      if (store.getItem(flagKey)) return;
+      patch.items.forEach(function (p) {
+        var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
+        if (target) {
+          if (p.clearMonths) { p.clearMonths.forEach(function (m) { target.months[m] = 0; }); }
+          if (p.months) { Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; }); }
+          if (p.note) { target.note = p.note; }
+          changed = true;
+        }
+      });
+      store.setItem(flagKey, "1");
+    });
+    if (changed) saveCostItems();
+  }
+
+  var ENDED_VENDOR_BATCHES = [
+    {
+      id: "kt-2026",
+      items: [
+        { vendor: "KT", name: "한양대 제 6,7 생활관_21.09.06" },
+        { vendor: "KT", name: "송도캠퍼스_22.12.26" },
+        { vendor: "KT", name: "양양펜타와이투_22.12.27" },
+        { vendor: "KT", name: "우암1구역_23.01.25" },
+        { vendor: "KT", name: "춘천 조양동_231106" },
+        { vendor: "KT", name: "A196 춘천 방룡단장_20240201" },
+        { vendor: "KT", name: "수포 김포 간부숙소 2개지역_20240913" },
+        { vendor: "KT", name: "원주 A454_25.03.10" }
+      ]
+    },
+    {
+      id: "oa-2026",
+      items: [
+        { vendor: "오에이사무기기", name: "울산현대자동차_23.06.16" },
+        { vendor: "오에이사무기기", name: "C205 2층 임원실" },
+        { vendor: "오에이사무기기", name: "C325 8층 임원실_25.04.02" },
+        { vendor: "오에이사무기기", name: "아산병원P동_251103" },
+        { vendor: "오에이사무기기", name: "잠실진주아파트_241014" },
+        { vendor: "오에이사무기기", name: "이문동3구역_22.01.04" },
+        { vendor: "오에이사무기기", name: "김포간부숙소(수도여단)_20240924" },
+        { vendor: "오에이사무기기", name: "23-F간부숙소(D098)_20240319" },
+        { vendor: "오에이사무기기", name: "춘천조양동_23.11.13" },
+        { vendor: "오에이사무기기", name: "한양대의생명융합연구센터2_25.03.26" },
+        { vendor: "오에이사무기기", name: "A196(춘천분산형)_20240202" },
+        { vendor: "오에이사무기기", name: "한양대 의생명연구센터_2024.05.13" },
+        { vendor: "오에이사무기기", name: "A454 원주_20250313" },
+        { vendor: "오에이사무기기", name: "JT친애저축은행_251111" },
+        { vendor: "오에이사무기기", name: "양양펜타와이투_24.04.1" },
+        { vendor: "오에이사무기기", name: "송도글로벌캠퍼스_22.11.09" }
+      ]
+    }
+  ];
+  function applyStatusDefaults() {
+    var changed = false;
+    state.costItems.forEach(function (c) {
+      if (!c.status) { c.status = "진행중"; changed = true; }
+    });
+    ENDED_VENDOR_BATCHES.forEach(function (batch) {
+      var flagKey = "chongmu.costitems.statuspatch." + batch.id + ".v1";
+      if (store.getItem(flagKey)) return;
+      batch.items.forEach(function (p) {
+        var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
+        if (target) { target.status = "종료"; changed = true; }
+      });
+      store.setItem(flagKey, "1");
+    });
+    if (changed) saveCostItems();
+  }
+
+  function setView(key) {
+    document.getElementById("view-cost").classList.add("active");
+    renderCostView();
+    window.scrollTo(0, 0);
+  }
+
+  function refreshAll() {
+    renderCostView();
+  }
+
+  function init() {
+    state.costItems = loadCostItems();
+    if (state.costItems.length === 0 && !store.getItem(COST_SEEDED_KEY)) {
+      state.costItems = seedCostItems2026();
+      saveCostItems();
+    }
+    store.setItem(COST_SEEDED_KEY, "1");
+    if (!store.getItem(VENDOR_SEEDED_KEY)) {
+      state.costItems = state.costItems.concat(seedVendorItems2026());
+      saveCostItems();
+      store.setItem(VENDOR_SEEDED_KEY, "1");
+    }
+    applyAmountPatches();
+    applyStatusDefaults();
+    if (state.costItems.length) {
+      var years = state.costItems.map(function (c) { return c.year; });
+      state.costYear = Math.max.apply(null, years);
+    }
+    setView("cost");
+  }
+
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeCostModal(); } });
+
+  var existing = getSession();
+  if (existing && existing.id) { showApp(existing.id); }
+})();
+</script>
+</body>
+</html>

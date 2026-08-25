@@ -1526,8 +1526,22 @@
       items: [
         { vendor: "SK브로드밴드", name: "7355765057(박명숙팀장)", add: true, months: { 1: 477790, 2: 480100, 3: 218670, 4: 219080, 5: 219070, 6: 480000, 7: 482090, 8: 477790 } }
       ]
+    },
+    {
+      id: "2026-skbb-reposition-7355765057",
+      items: [
+        { vendor: "SK브로드밴드", name: "7355765057(박명숙팀장)", reposition: true }
+      ]
     }
   ];
+  function insertAfterSameVendor(newItem) {
+    var insertAt = -1;
+    for (var vi = state.costItems.length - 1; vi >= 0; vi--) {
+      if (state.costItems[vi].vendor === newItem.vendor && state.costItems[vi].year === newItem.year) { insertAt = vi + 1; break; }
+    }
+    if (insertAt >= 0) { state.costItems.splice(insertAt, 0, newItem); }
+    else { state.costItems.push(newItem); }
+  }
   function applyAmountPatches() {
     var changed = false;
     AMOUNT_PATCHES.forEach(function (patch) {
@@ -1542,13 +1556,17 @@
             status: p.status || "진행중", assignee: p.assignee || "총무지원팀", due: p.due || "",
             note: "", months: emptyMonths()
           };
-          state.costItems.push(target);
+          insertAfterSameVendor(target);
         }
         if (target) {
           if (p.clearMonths) { p.clearMonths.forEach(function (m) { target.months[m] = 0; }); }
           if (p.months) { Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; }); }
           if (p.note) { target.note = p.note; }
           if (p.rename) { target.name = p.rename; }
+          if (p.reposition) {
+            state.costItems.splice(state.costItems.indexOf(target), 1);
+            insertAfterSameVendor(target);
+          }
           changed = true;
         }
       });

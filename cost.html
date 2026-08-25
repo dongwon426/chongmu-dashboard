@@ -297,7 +297,7 @@
   table.cost tfoot td.sticky-actions { background: var(--surface-2); }
   th.sticky-left, td.sticky-left { position: sticky; background: var(--surface); }
   th.sticky-left-1, td.sticky-left-1 { left: 0; }
-  th.sticky-left-3, td.sticky-left-3 { box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+  th.sticky-left-4, td.sticky-left-4 { box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
   tr:hover td.sticky-left { background: var(--surface-2); }
   table.cost tfoot td.sticky-left { background: var(--surface-2); }
   tr.row-ended td { background: var(--bad-tint); }
@@ -397,7 +397,7 @@
             <option value="진행중">진행중인 거래처</option>
             <option value="종료">종료된 거래처</option>
           </select>
-          <input type="text" id="cost-search-input" class="cost-search" placeholder="거래처 또는 항목 검색" />
+          <input type="text" id="cost-search-input" class="cost-search" placeholder="거래처, 항목 또는 번호 검색" />
         </div>
         <div class="kpi-row" id="cost-kpi-row"></div>
         <div class="table-wrap" id="cost-table-wrap">
@@ -421,6 +421,10 @@
           <label for="f-cost-name">항목명</label>
           <input id="f-cost-name" type="text" placeholder="예: 화재보험(체육시설포함)" required />
         </div>
+      </div>
+      <div class="field">
+        <label for="f-cost-serviceno">번호 (선택)</label>
+        <input id="f-cost-serviceno" type="text" placeholder="예: KT 서비스번호, 계약번호 등" />
       </div>
       <div class="grid-2">
         <div class="field">
@@ -902,7 +906,7 @@
     if (state.costSearchQuery) {
       var q = state.costSearchQuery.trim().toLowerCase();
       items = items.filter(function (c) {
-        return (c.vendor || "").toLowerCase().indexOf(q) !== -1 || (c.name || "").toLowerCase().indexOf(q) !== -1;
+        return (c.vendor || "").toLowerCase().indexOf(q) !== -1 || (c.name || "").toLowerCase().indexOf(q) !== -1 || (c.serviceNo || "").toLowerCase().indexOf(q) !== -1;
       });
     }
     return items;
@@ -986,7 +990,8 @@
       return '<tr data-id="' + c.id + '"' + (status === "종료" ? ' class="row-ended"' : '') + '>' +
         '<td class="sticky-left sticky-left-1"><span class="pill st-' + status + '">' + status + '</span></td>' +
         '<td class="sticky-left sticky-left-2">' + (c.vendor ? esc(c.vendor) : '<span class="cell-memo">-</span>') + '</td>' +
-        '<td class="sticky-left sticky-left-3 cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
+        '<td class="sticky-left sticky-left-3">' + (c.serviceNo ? esc(c.serviceNo) : '<span class="cell-memo">-</span>') + '</td>' +
+        '<td class="sticky-left sticky-left-4 cost-name cell-title">' + esc(c.name) + (c.recurring ? ' <span class="cat-chip">매월</span>' : '') + '</td>' +
         '<td><span class="cat-chip">' + esc(c.category) + '</span></td>' +
         monthCells +
         '<td class="num" style="font-weight:700;">' + fmtMoney(rowTotal) + '</td>' +
@@ -999,10 +1004,10 @@
         '</div></td></tr>';
     }).join("");
     var footCells = monthTotals.map(function (t) { return '<td class="num month-col">' + fmtMoney(t) + '</td>'; }).join("");
-    var thead = '<thead><tr><th class="sticky-left sticky-left-1">상태</th><th class="sticky-left sticky-left-2">거래처</th><th class="sticky-left sticky-left-3">항목</th><th>구분</th>' +
+    var thead = '<thead><tr><th class="sticky-left sticky-left-1">상태</th><th class="sticky-left sticky-left-2">거래처</th><th class="sticky-left sticky-left-3">번호</th><th class="sticky-left sticky-left-4">항목</th><th>구분</th>' +
       MONTH_LABELS.map(function (m) { return '<th class="month-col">' + m + '</th>'; }).join("") +
       '<th>합계</th><th>납부일(비고)</th><th class="sticky-actions">관리</th></tr></thead>';
-    var tfoot = '<tfoot><tr><td class="sticky-left sticky-left-1" colspan="4">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
+    var tfoot = '<tfoot><tr><td class="sticky-left sticky-left-1" colspan="5">월별 합계</td>' + footCells + '<td class="num">' + fmtMoney(grandTotal) + '</td><td></td><td class="sticky-actions"></td></tr></tfoot>';
     var wrap = document.getElementById("cost-table");
     wrap.innerHTML = thead + '<tbody>' + rows + '</tbody>' + tfoot;
     wrap.querySelectorAll("[data-cost-up]").forEach(function (btn) {
@@ -1035,11 +1040,14 @@
     if (!headRow) return;
     var col1 = headRow.querySelector(".sticky-left-1");
     var col2 = headRow.querySelector(".sticky-left-2");
-    if (!col1 || !col2) return;
+    var col3 = headRow.querySelector(".sticky-left-3");
+    if (!col1 || !col2 || !col3) return;
     var offset2 = col1.getBoundingClientRect().width;
     var offset3 = offset2 + col2.getBoundingClientRect().width;
+    var offset4 = offset3 + col3.getBoundingClientRect().width;
     table.querySelectorAll(".sticky-left-2").forEach(function (el) { el.style.left = offset2 + "px"; });
     table.querySelectorAll(".sticky-left-3").forEach(function (el) { el.style.left = offset3 + "px"; });
+    table.querySelectorAll(".sticky-left-4").forEach(function (el) { el.style.left = offset4 + "px"; });
   }
 
   function renderCostView() {
@@ -1076,6 +1084,7 @@
       document.getElementById("cost-modal-sub").textContent = c.year + "년 · " + c.category;
       document.getElementById("f-cost-id").value = c.id;
       document.getElementById("f-cost-vendor").value = c.vendor || "";
+      document.getElementById("f-cost-serviceno").value = c.serviceNo || "";
       document.getElementById("f-cost-name").value = c.name;
       fillCostCategorySelect(c.category);
       document.getElementById("f-cost-due").value = c.due || "";
@@ -1122,6 +1131,7 @@
     var data = {
       year: state.costYear,
       vendor: document.getElementById("f-cost-vendor").value.trim(),
+      serviceNo: document.getElementById("f-cost-serviceno").value.trim(),
       name: document.getElementById("f-cost-name").value.trim(),
       category: document.getElementById("f-cost-category").value,
       assignee: "총무지원팀",
@@ -1155,12 +1165,12 @@
 
   document.getElementById("btn-export-cost-csv").addEventListener("click", function () {
     var items = filteredCostItems();
-    var header = ["연도", "상태", "거래처", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
+    var header = ["연도", "상태", "거래처", "번호", "항목", "구분", "담당자", "반복여부"].concat(MONTH_LABELS, ["연간합계", "납부일(기간)", "비고"]);
     var lines = [header.join(",")];
     items.forEach(function (c) {
       var monthVals = [];
       for (var i = 1; i <= 12; i++) monthVals.push(c.months[i] || 0);
-      var row = [c.year, c.status || "진행중", c.vendor || "", c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
+      var row = [c.year, c.status || "진행중", c.vendor || "", c.serviceNo || "", c.name, c.category, c.assignee, c.recurring ? "매월" : "1회성"]
         .concat(monthVals, [costMonthTotal(c), c.due || "", c.note || ""])
         .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; });
       lines.push(row.join(","));

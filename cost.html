@@ -629,6 +629,7 @@
       ["SK브로드밴드", "한양대 구자겸 기계관_231109"],
       ["SK브로드밴드", "중랑창업지원센터_20260722(이명원 과장)"],
       ["SK브로드밴드", "토펙엔지어링(박명숙팀장)"],
+      ["SK브로드밴드", "7355765057(박명숙팀장)"],
       ["LGU+", "070+서울지사(토펙빌딩)+포항 인터넷"],
       ["LGU+", "포항인터넷(유선1개)"],
       ["LGU+", "인천가정 LG_202512"],
@@ -1519,6 +1520,12 @@
         { vendor: "SK브로드밴드", name: "중랑창업지원센터_20260722(이명원 과장)", months: { 8: 10560 } },
         { vendor: "SK브로드밴드", name: "토펙엔지어링(박명숙팀장)", months: { 1: 2666310, 2: 2756520, 3: 779680, 4: 773620, 5: 749920, 6: 2590750, 7: 2594040, 8: 2621260 } }
       ]
+    },
+    {
+      id: "2026-skbb-add-7355765057",
+      items: [
+        { vendor: "SK브로드밴드", name: "7355765057(박명숙팀장)", add: true, months: { 1: 477790, 2: 480100, 3: 218670, 4: 219080, 5: 219070, 6: 480000, 7: 482090, 8: 477790 } }
+      ]
     }
   ];
   function applyAmountPatches() {
@@ -1528,6 +1535,15 @@
       if (store.getItem(flagKey)) return;
       patch.items.forEach(function (p) {
         var target = state.costItems.find(function (c) { return c.vendor === p.vendor && c.name === p.name && c.year === 2026; });
+        if (!target && p.add) {
+          target = {
+            id: uid(), year: 2026, vendor: p.vendor, name: p.name,
+            category: p.category || "고정지출", recurring: p.recurring !== undefined ? p.recurring : true,
+            status: p.status || "진행중", assignee: p.assignee || "총무지원팀", due: p.due || "",
+            note: "", months: emptyMonths()
+          };
+          state.costItems.push(target);
+        }
         if (target) {
           if (p.clearMonths) { p.clearMonths.forEach(function (m) { target.months[m] = 0; }); }
           if (p.months) { Object.keys(p.months).forEach(function (m) { target.months[m] = p.months[m]; }); }

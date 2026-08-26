@@ -2252,6 +2252,15 @@
     });
     if (changed) saveCostItems();
   }
+  function reorderAnnualItemsToEnd() {
+    var flagKey = "chongmu.costitems.reorder.annual-to-end.v1";
+    if (store.getItem(flagKey)) { return; }
+    var annual = state.costItems.filter(function (c) { return !c.vendor; });
+    var others = state.costItems.filter(function (c) { return !!c.vendor; });
+    state.costItems = others.concat(annual);
+    saveCostItems();
+    store.setItem(flagKey, "1");
+  }
 
   function init() {
     state.records = loadRecords();
@@ -2273,6 +2282,7 @@
     }
     applyAmountPatches();
     applyStatusDefaults();
+    reorderAnnualItemsToEnd();
     if (state.costItems.length) {
       var years = state.costItems.map(function (c) { return c.year; });
       state.costYear = Math.max.apply(null, years);
